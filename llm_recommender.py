@@ -88,6 +88,7 @@ IMPORTANT: Respond with ONLY valid JSON in the exact format below. No markdown, 
       "strengths": ["strength 1", "strength 2"],
       "weaknesses": ["weakness 1"]
     }}
+    // ... add up to 10 properties here ...
   ],
   "top_3": [
     {{
@@ -97,6 +98,7 @@ IMPORTANT: Respond with ONLY valid JSON in the exact format below. No markdown, 
       "score": 9.0,
       "recommendation_reason": "2-3 sentence explanation of why this property is recommended"
     }}
+    // ... add exactly 3 properties here ...
   ],
   "best_pick": {{
     "property_name": "name",
