@@ -19,8 +19,8 @@ import sys
 from datetime import datetime
 
 import config
-# from browser_agent import run_browser_agent
-from smart_browser_agent import run_browser_agent
+from browser_agent import run_browser_agent
+# from smart_browser_agent import run_browser_agent
 from data_filter import filter_properties
 from llm_recommender import rank_properties
 from report_generator import generate_all_reports
@@ -160,8 +160,8 @@ async def run_pipeline():
         # =========================================================
         # STEP 2.5: Deep Scrape Shortlisted Properties
         # =========================================================
-        # from browser_agent import scrape_details_for_urls
-        from smart_browser_agent import scrape_details_for_urls
+        from browser_agent import scrape_details_for_urls
+        # from smart_browser_agent import scrape_details_for_urls
         if filtered:
             detailed_props = await scrape_details_for_urls(filtered)
             if detailed_props:
