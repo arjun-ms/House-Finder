@@ -217,30 +217,72 @@ async def fill_location(page: Page):
     
     selected_count = 0
     try:
-        # Try a generic text search on the page to find the dropdown option
-        # VERY IMPORTANT: Restrict this to the suggest list container so we don't click banners!
-        # Fix: Use :is() to properly group comma-separated selectors before applying >> text=...
-        option_selector = ":is(#serachSuggest, .mb-search__auto-suggest, .mb-search__auto-suggest__list, .sugg-list, .auto-suggest, .pac-container)"
-        option = page.locator(f"{option_selector} >> text={config.SEARCH_KEYWORD}").first
-        if await option.is_visible(timeout=3000):
-            await option.evaluate('el => el.click()')
-            selected_count += 1
-            print(f"[*] Selected dropdown option containing: {config.SEARCH_KEYWORD}")
-            await asyncio.sleep(1)
-        else:
-            # Fallback to general list items inside the suggest container
-            items = page.locator(f"{option_selector} >> li, {option_selector} >> .pac-item, {option_selector} >> [class*='suggest']")
-            count = await items.count()
-            for i in range(count):
-                text = await items.nth(i).text_content()
-                if text and config.SEARCH_KEYWORD.lower() in text.lower():
-                    await items.nth(i).evaluate('el => el.click()')
-                    selected_count += 1
-                    print(f"[*] Selected list item: {text.strip()}")
-                    await asyncio.sleep(1)
-                    break
+        # Wait for the suggest dropdown container to appear
+        await page.wait_for_selector("#serachSuggest", state="visible", timeout=5000)
+        
+        # Get all suggestion items (the actual clickable divs)
+        items = page.locator("#serachSuggest .mb-search__auto-suggest__item")
+        await asyncio.sleep(0.5)
+        count = await items.count()
+        print(f"[*] Found {count} dropdown suggestion items")
+        
+        # Collect only LOCATION items (onclick contains "locality"), skip Projects
+        location_items = []
+        for i in range(count):
+            try:
+                el = items.nth(i)
+                onclick = await el.get_attribute("onclick", timeout=1000)
+                text = await el.text_content(timeout=1000)
+                if onclick and text:
+                    text = text.strip()
+                    is_locality = "locality" in onclick.lower()
+                    has_keyword = config.SEARCH_KEYWORD.lower() in text.lower()
+                    has_city = config.CITY.lower() in text.lower()
+                    print(f"[*]   Item {i}: '{text}' locality={is_locality} keyword={has_keyword} city={has_city}")
+                    if is_locality and has_keyword and has_city:
+                        location_items.append((i, text))
+            except Exception:
+                continue
+        
+        # Cap at MAX_LOCATIONS_TO_SELECT
+        location_items = location_items[:config.MAX_LOCATIONS_TO_SELECT]
+        print(f"[*] Will select {len(location_items)} locations: {[t for _, t in location_items]}")
+        
+        # Click each location item
+        for idx, (item_index, text) in enumerate(location_items):
+            try:
+                # After clicking a previous item, the dropdown might close
+                # Re-trigger it by clearing and retyping
+                if idx > 0:
+                    await input_element.click()
+                    await asyncio.sleep(0.3)
+                    await input_element.type(partial_keyword, delay=80)
+                    await asyncio.sleep(3)
+                    # Re-fetch the items since DOM may have refreshed
+                    items = page.locator("#serachSuggest .mb-search__auto-suggest__item")
+                
+                # Find the right item by matching onclick for locality
+                current_count = await items.count()
+                clicked = False
+                for j in range(current_count):
+                    el = items.nth(j)
+                    onclick = await el.get_attribute("onclick", timeout=1000)
+                    el_text = await el.text_content(timeout=1000)
+                    if onclick and el_text and "locality" in onclick.lower() and el_text.strip().lower() == text.lower():
+                        await el.evaluate("el => el.click()")
+                        selected_count += 1
+                        clicked = True
+                        print(f"[*] Selected location: '{text}'")
+                        await asyncio.sleep(1)
+                        break
+                
+                if not clicked:
+                    print(f"[!] Could not re-find item: '{text}'")
+            except Exception as e:
+                print(f"[!] Failed to select '{text}': {e}")
+                
     except Exception as e:
-        print(f"[!] Error selecting dropdown: {e}")
+        print(f"[!] Error processing dropdown options: {e}")
 
     if selected_count == 0:
         # DO NOT press enter. Pressing enter searches default properties (e.g., Buy, Mumbai)

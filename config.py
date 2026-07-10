@@ -8,6 +8,8 @@ Edit these values to tweak search criteria and agent behavior.
 # =============================================================================
 
 SEARCH_KEYWORD = "Whitefield"
+CITY = "Bangalore"
+MAX_LOCATIONS_TO_SELECT = 3
 BHK_TYPE = "2 BHK"
 MIN_BUDGET = 50000
 MAX_BUDGET = 60000
