@@ -151,6 +151,18 @@ def generate_markdown_report(
             name = prop.get("property_name", "Unknown")
             score = prop.get("score", "N/A")
             price = prop.get("price", "N/A")
+            if isinstance(price, (int, float)):
+                # Convert to Indian numbering system format (e.g. 1,50,000 instead of 150,000)
+                price_str = str(int(price))
+                if len(price_str) > 3:
+                    last_three = price_str[-3:]
+                    other_numbers = price_str[:-3]
+                    # Insert comma every 2 digits from the right
+                    other_numbers = ",".join([other_numbers[max(0, i-2):i] for i in range(len(other_numbers), 0, -2)][::-1])
+                    price = f"₹{other_numbers},{last_three}"
+                else:
+                    price = f"₹{price_str}"
+                
             location = prop.get("location", "N/A")
             floor = prop.get("floor_number", "N/A")
             age = prop.get("property_age", "N/A")

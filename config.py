@@ -40,7 +40,7 @@ MAX_DELAY = 5                       # Maximum seconds between page navigations
 
 VIEWPORT_WIDTH = 1366
 VIEWPORT_HEIGHT = 768
-HEADED = False                       # Run browser in headless mode
+HEADED = True                        # Run browser in headless mode
 RECORD_VIDEO = True                 # Record browser session
 VIDEO_DIR = "output"
 

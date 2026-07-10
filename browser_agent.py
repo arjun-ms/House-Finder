@@ -424,6 +424,101 @@ async def apply_budget_filter(page: Page, tools: AgentTools = None):
         await tools.inspect_step("budget_filter", ".mb-search__budget")
 
 
+async def apply_more_filters(page: Page, tools: AgentTools = None):
+    """Click 'More Filters' and select Floor options (9-12, 13-16, 16+)."""
+    print("[*] Applying 'More Filters' (Floor >= 9)...")
+    
+    more_filters_selectors = [
+        ".mb-search__more-filter",
+        ".mb-search__filter-more",
+        "div.mb-search__filter-more",
+        "div.more-filter",
+        "xpath=//div[contains(@class, 'more-filter')]",
+        "xpath=//*[contains(text(), 'More Filters')]",
+        "xpath=//*[contains(., 'More Filters') and contains(@class, 'search')]"
+    ]
+    
+    clicked_more = False
+    for sel in more_filters_selectors:
+        try:
+            el = page.locator(sel).first
+            if await el.is_visible(timeout=1000):
+                await el.evaluate('el => el.click()')
+                clicked_more = True
+                break
+        except Exception:
+            continue
+            
+    if not clicked_more:
+        try:
+            el = page.locator("text=/More Filters/i").first
+            if await el.is_visible(timeout=2000):
+                await el.evaluate('el => el.click()')
+                clicked_more = True
+        except Exception:
+            pass
+
+    if not clicked_more:
+        print("[!] Could not find 'More Filters' button, skipping...")
+        return
+        
+    await asyncio.sleep(1)
+    
+    try:
+        floor_tab = page.locator("text='Floor'").first
+        if await floor_tab.is_visible(timeout=2000):
+            await floor_tab.evaluate('el => el.click()')
+            await asyncio.sleep(0.5)
+    except Exception as e:
+        print(f"[!] Could not select 'Floor' tab: {e}")
+        
+    # Click floor pills
+    floor_options = ["9-12", "13-16", "16+"]
+    for option in floor_options:
+        try:
+            pill = page.locator(f"text='{option}'").first
+            if await pill.is_visible(timeout=1000):
+                await pill.evaluate('el => el.click()')
+                await asyncio.sleep(0.3)
+                print(f"[*] Selected floor option: {option}")
+        except Exception as e:
+            print(f"[!] Could not select floor '{option}': {e}")
+            
+    # Apply button (sometimes "View X Properties")
+    # Apply button (sometimes "View X Properties" or "Apply")
+    apply_btn_selectors = [
+        "text=/View .* Properties/i",
+        "text='Apply'",
+        "text='View Properties'",
+        "div.mb-search__filter-btn",
+        ".mb-search__filter-action button",
+        "xpath=//div[contains(@class, 'filter')]//button[contains(text(), 'View')]",
+        "xpath=//div[contains(@class, 'filter')]//button[contains(text(), 'Apply')]"
+    ]
+    
+    applied = False
+    for sel in apply_btn_selectors:
+        try:
+            apply_btn = page.locator(sel).first
+            if await apply_btn.is_visible(timeout=1000):
+                await apply_btn.evaluate('el => el.click()')
+                print(f"[*] Applied More Filters using selector: {sel}")
+                await asyncio.sleep(2)
+                applied = True
+                break
+        except Exception:
+            continue
+            
+    if not applied:
+        print("[!] Could not find the Apply button in More Filters. Pressing Escape...")
+        await page.keyboard.press("Escape")
+        await asyncio.sleep(1)
+        
+    if tools:
+        await tools.inspect_step("more_filters", "body")
+
+
+
 async def click_search(page: Page, tools: AgentTools = None):
     """Click the search button to execute the search."""
     print("[*] Clicking Search button...")
@@ -649,12 +744,41 @@ async def scrape_property_detail(context, url: str, index: int, total: int) -> d
             ".propPrice",
             "#price",
         ]
+        
+        def parse_price(text: str) -> int | None:
+            if not text: return None
+            text = text.replace(",", "").strip()
+            
+            # If "Rent" is in the text, try to extract the number after it
+            rent_match = re.search(r"Rent[^\d]*([\d.]+)\s*(Cr|Lac|Lakh|K|k)?", text, re.IGNORECASE)
+            if rent_match:
+                match = rent_match
+            else:
+                # Match number and optional unit like Cr, Lac, K
+                match = re.search(r"([\d.]+)\s*(Cr|Lac|Lakh|K|k)?", text, re.IGNORECASE)
+                
+            if match:
+                try:
+                    val = float(match.group(1))
+                    unit = (match.group(2) or "").lower()
+                    if "cr" in unit: val *= 10000000
+                    elif "lac" in unit or "lakh" in unit: val *= 100000
+                    elif "k" in unit: val *= 1000
+                    return int(val)
+                except ValueError:
+                    pass
+            return None
+
         for sel in price_selectors:
             try:
                 el = page.locator(sel).first
                 if await el.is_visible(timeout=1000):
                     price_text = (await el.text_content()).strip()
-                    property_data["price"] = price_text
+                    parsed = parse_price(price_text)
+                    if parsed:
+                        property_data["price"] = parsed
+                    else:
+                        property_data["price"] = price_text[:20]  # truncate garbage
                     break
             except Exception:
                 continue
@@ -833,6 +957,28 @@ async def run_browser_agent() -> list[dict]:
             record_video_dir=config.VIDEO_DIR if config.RECORD_VIDEO else None
         )
         page = await context.new_page()
+        
+        # Block annoying redirects and popups
+        async def block_ads(route):
+            url = route.request.url
+            if "home-interior" in url.lower() or "hp_toolsandadvicesection" in url.lower():
+                print(f"[!] Blocked background network request to ad/banner: {url}")
+                await route.abort()
+            else:
+                await route.continue_()
+                
+        await context.route("**/*", block_ads)
+        
+        async def handle_new_page(new_page):
+            if new_page != page:
+                print(f"[!] Blocked unexpected new tab (Likely an Ad).")
+                try:
+                    await new_page.close()
+                except:
+                    pass
+                    
+        context.on("page", lambda p: asyncio.create_task(handle_new_page(p)))
+        page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
 
         # Initialize agent inspection tools
         tools = AgentTools(page)
@@ -858,9 +1004,13 @@ async def run_browser_agent() -> list[dict]:
             await apply_budget_filter(page, tools)
             await random_delay()
 
-            # Step 6: Execute search
+            # Step 5.5: Execute search first (More Filters is only on the search results page)
             await click_search(page, tools)
             await tools.inspect_step("search_results", "body")
+            await random_delay()
+
+            # Step 6: Apply more filters (Floor) on the Search Results Page
+            await apply_more_filters(page, tools)
             await random_delay()
 
             # Step 7: Collect listing URLs

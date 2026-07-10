@@ -149,9 +149,31 @@ async def run_pipeline():
         print("\n[STEP 3/4] Sending to Gemini for ranking...")
         print("-" * 60)
 
-        llm_result = rank_properties(filtered)
-
-        print(f"\n[STEP 3 COMPLETE] Ranking received.")
+        try:
+            llm_result = rank_properties(filtered)
+            print(f"\n[STEP 3 COMPLETE] Ranking received.")
+        except Exception as e:
+            print(f"\n[!] LLM Ranking failed: {e}")
+            print("    API Quota likely exhausted. Bypassing LLM and generating fallback report...")
+            
+            # Fallback dummy ranking so reports still generate
+            dummy_top3 = []
+            for i, prop in enumerate(filtered[:3], 1):
+                dummy_top3.append({
+                    "rank": i,
+                    "property_name": prop.get("property_name", "Unknown"),
+                    "score": 9.0 - (i * 0.5),
+                    "recommendation_reason": "Fallback generated (LLM API quota exhausted). This property passed all Stage 2 filters.",
+                    "listing_url": prop.get("listing_url")
+                })
+                
+            llm_result = {
+                "shortlisted_10": filtered[:10],
+                "top_3": dummy_top3,
+                "best_pick": dummy_top3[0] if dummy_top3 else {}
+            }
+            if llm_result["best_pick"]:
+                llm_result["best_pick"]["why"] = "Fallback best pick (LLM API quota exhausted). Passed all strict criteria."
 
     # =========================================================
     # STEP 4: Generate Reports
