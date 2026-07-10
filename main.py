@@ -19,7 +19,8 @@ import sys
 from datetime import datetime
 
 import config
-from browser_agent import run_browser_agent
+# from browser_agent import run_browser_agent
+from smart_browser_agent import run_browser_agent
 from data_filter import filter_properties
 from llm_recommender import rank_properties
 from report_generator import generate_all_reports
@@ -155,6 +156,36 @@ async def run_pipeline():
         }
     else:
         print(f"\n[STEP 2 COMPLETE] {len(filtered)} properties passed filters.")
+
+        # =========================================================
+        # STEP 2.5: Deep Scrape Shortlisted Properties
+        # =========================================================
+        # from browser_agent import scrape_details_for_urls
+        from smart_browser_agent import scrape_details_for_urls
+        if filtered:
+            detailed_props = await scrape_details_for_urls(filtered)
+            if detailed_props:
+                filtered = detailed_props
+                # Re-apply Stage 2 filters because deep scraping may reveal hidden details (like exact price/age)
+                print("\n[*] Re-applying filters on deep-scraped data...")
+                filtered, new_excluded = filter_properties(filtered)
+                excluded.extend(new_excluded)
+                
+                if not filtered:
+                    print("\n[!] No properties passed filters after deep scraping.")
+                    # Fallback to LLM with empty list
+                    llm_result = {
+                        "shortlisted_10": [],
+                        "top_3": [],
+                        "best_pick": {
+                            "property_name": "None",
+                            "why": "No properties passed after deep scraping.",
+                        },
+                    }
+                    print("\n[STEP 3/4] Sending to Gemini for ranking...")
+                    print("  Skipped: List is empty.")
+                    generate_all_reports(all_scraped, filtered, excluded, llm_result)
+                    return
 
         # =========================================================
         # STEP 3: LLM Ranking
