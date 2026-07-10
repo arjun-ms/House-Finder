@@ -14,9 +14,7 @@ import re
 from datetime import datetime
 
 import config
-from browser_use import Agent, Browser
-from browser_use.browser.browser import BrowserConfig
-from langchain_google_genai import ChatGoogleGenerativeAI
+from browser_use import Agent, Browser, ChatGoogle
 from playwright.async_api import Page, async_playwright
 
 from browser_agent import (
@@ -34,11 +32,15 @@ async def run_browser_agent() -> list[dict]:
     failed_count = 0
     
     # Configure the Gemini LLM
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash") # Gemini 2.5 Flash is great for agentic web tasks
+    from dotenv import load_dotenv
+    load_dotenv()
+    if not os.environ.get("GOOGLE_API_KEY") and os.environ.get("GEMINI_API_KEY"):
+        os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
+        
+    llm = ChatGoogle(model="gemini-2.5-flash") # Gemini 2.5 Flash is great for agentic web tasks
     
     # Configure the browser-use browser
-    browser_config = BrowserConfig(headless=not config.HEADED)
-    browser = Browser(config=browser_config)
+    browser = Browser(headless=not config.HEADED)
     
     locations_to_test = [config.SEARCH_KEYWORD]
     
@@ -60,13 +62,11 @@ async def run_browser_agent() -> list[dict]:
         Once the search results are fully visible and filtered, stop and finish the task.
         """
         
-        # We create a new context for this run
-        context = await browser.new_context()
-        
+        # We use the browser directly
         agent = Agent(
             task=prompt,
             llm=llm,
-            browser_context=context
+            browser=browser
         )
         
         try:
@@ -75,8 +75,8 @@ async def run_browser_agent() -> list[dict]:
             print("[*] LLM Agent finished navigation.")
             
             # Now the browser should be on the SRP (Search Results Page)
-            # Get the Playwright page from the browser-use context
-            page = await context.get_current_page()
+            # Get the Playwright page from the browser directly
+            page = await browser.get_current_page()
             
             print("[*] Handing over to deterministic parser...")
             # Collect Properties directly from Search Results Page

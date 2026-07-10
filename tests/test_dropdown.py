@@ -1,6 +1,9 @@
 import asyncio
 from playwright.async_api import async_playwright
 
+import pytest
+
+@pytest.mark.asyncio
 async def test_dropdown():
     locations = [
         "Whitefield",

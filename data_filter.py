@@ -98,6 +98,17 @@ def filter_properties(properties: list[dict]) -> tuple[list[dict], list[dict]]:
         else:
             notes.append("Floor: unknown (included with flag)")
 
+        # --- Budget Filter ---
+        price = prop.get("price")
+        if isinstance(price, (int, float)):
+            if price < config.MIN_BUDGET or price > config.MAX_BUDGET:
+                should_include = False
+                notes.append(f"Price {price} out of range (excluded)")
+            else:
+                notes.append(f"Price {price} (OK)")
+        else:
+            notes.append("Price: unknown (included with flag)")
+
         # --- Property Age Filter ---
         age = parse_property_age(prop)
         if age is not None:

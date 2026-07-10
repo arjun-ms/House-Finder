@@ -21,7 +21,7 @@ async def test_search_form():
             await select_rent_tab(page)
             
             # 3. Fill Location
-            await fill_location(page)
+            await fill_location(page, "Whitefield")
             
             # Dump the search form DOM to debug the search button
             try:

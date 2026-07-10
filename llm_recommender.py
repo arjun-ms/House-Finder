@@ -27,7 +27,7 @@ def get_gemini_client():
             "Create a .env file with GEMINI_API_KEY=your_key_here "
             "(see .env.example)"
         )
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=api_key, http_options={'timeout': 30000})
     return client
 
 

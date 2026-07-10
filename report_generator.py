@@ -144,8 +144,8 @@ def generate_markdown_report(
     if shortlisted:
         lines.append("## All Shortlisted Properties")
         lines.append("")
-        lines.append("| Rank | Property | Score | rental price(per month) | Location | Floor | Age | Strengths |")
-        lines.append("|------|----------|-------|-------|----------|-------|-----|-----------|")
+        lines.append("| Rank | Property | Score | Price | Config | Area | Furnished | Location | Floor | Age |")
+        lines.append("|------|----------|-------|-------|--------|------|-----------|----------|-------|-----|")
         for prop in shortlisted:
             rank = prop.get("rank", "?")
             name = prop.get("property_name", "Unknown")
@@ -167,12 +167,25 @@ def generate_markdown_report(
             floor = prop.get("floor_number")
             floor = f"{floor}" if floor is not None else "12+ (UI Filtered)"
             age = prop.get("property_age")
-            age = f"{age} Yrs" if age is not None else "N/A"
-            strengths = ", ".join((prop.get("strengths") or [])[:2])
+            if age is not None:
+                if isinstance(age, (int, float)) and age > 1000:
+                    age = f"Built {int(age)}"
+                else:
+                    age = f"{age} Yrs"
+            else:
+                age = "N/A"
+            
+            bhk = prop.get("bhk_config") or "N/A"
+            area = prop.get("built_up_area") or "N/A"
+            furnishing = prop.get("furnishing_status") or "N/A"
+
             # Truncate long values for table
             name = name[:30] if len(str(name)) > 30 else name
-            location = str(location)[:25] if len(str(location)) > 25 else location
-            lines.append(f"| {rank} | {name} | {score} | {price} | {location} | {floor} | {age} | {strengths} |")
+            location = str(location)[:20] if len(str(location)) > 20 else location
+            bhk = str(bhk).replace("BHK", "").strip() if bhk != "N/A" else bhk
+            area = str(area).replace("sqft", "").strip() if area != "N/A" else area
+            
+            lines.append(f"| {rank} | {name} | {score} | {price} | {bhk} | {area} | {furnishing} | {location} | {floor} | {age} |")
         lines.append("")
         lines.append("---")
         lines.append("")

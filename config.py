@@ -19,8 +19,8 @@ PROPERTY_TYPE = "Rent"
 # FILTER CRITERIA (Stage 2 - Applied programmatically after scraping)
 # =============================================================================
 
-MIN_FLOOR = 12              # 12th floor and above
-MAX_PROPERTY_AGE = 5        # Property age <= 5 years
+MIN_FLOOR = 5              # 12th floor and above
+MAX_PROPERTY_AGE = 15        # Property age <= 5 years
 REQUIRE_BALCONY = True      # Must have at least 1 balcony
 
 # =============================================================================
@@ -30,7 +30,7 @@ REQUIRE_BALCONY = True      # Must have at least 1 balcony
 MAX_LISTINGS_TO_SCRAPE = 10        # Total listings to scrape from search results
 TARGET_SHORTLIST = 2               # Target number of properties after filtering
 PAGE_LOAD_TIMEOUT = 30000           # Page load timeout in milliseconds
-DETAIL_PAGE_TIMEOUT = 15000         # Timeout for property detail page elements
+DETAIL_PAGE_TIMEOUT = 45000         # Timeout for property detail page elements
 MIN_DELAY = 2                       # Minimum seconds between page navigations
 MAX_DELAY = 5                       # Maximum seconds between page navigations
 
@@ -85,4 +85,4 @@ SCORING_WEIGHTS = {
 OUTPUT_DIR = "output"
 RESULTS_JSON = "output/results.json"
 REPORT_MD = "output/report.md"
-REPORT_HTML = "output/report.html"
+REPORT_HTML = "output/min_5_report.html"
