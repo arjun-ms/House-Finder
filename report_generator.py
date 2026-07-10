@@ -144,7 +144,7 @@ def generate_markdown_report(
     if shortlisted:
         lines.append("## All Shortlisted Properties")
         lines.append("")
-        lines.append("| Rank | Property | Score | Price | Location | Floor | Age | Strengths |")
+        lines.append("| Rank | Property | Score | rental price(per month) | Location | Floor | Age | Strengths |")
         lines.append("|------|----------|-------|-------|----------|-------|-----|-----------|")
         for prop in shortlisted:
             rank = prop.get("rank", "?")
