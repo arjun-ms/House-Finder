@@ -54,6 +54,10 @@ def reset_config():
     config.REQUIRE_BALCONY = True
     # Disable progressive relaxation for strict filter tests
     config.TARGET_SHORTLIST = 0
+    
+    # Save test reports to a separate file so we don't overwrite real reports
+    config.REPORT_MD = "output/test_report.md"
+    config.RESULTS_JSON = "output/test_results.json"
     yield
 
 
