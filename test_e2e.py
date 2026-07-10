@@ -97,7 +97,7 @@ async def test_stage1_all_ui_filters_applied():
                     await apply_bhk_filter(page)
                     await apply_budget_filter(page)
                     await click_search(page)
-                    await apply_more_filters(page)
+                    await apply_more_filters(page, "16+")
                     break
                 except Exception as e:
                     print(f"\n[!] Flaky UI interaction failed on attempt {attempt+1}: {e}")

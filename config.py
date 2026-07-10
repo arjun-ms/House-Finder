@@ -11,8 +11,8 @@ SEARCH_KEYWORD = "Whitefield"
 CITY = "Bangalore"
 MAX_LOCATIONS_TO_SELECT = 3
 BHK_TYPE = "2 BHK"
-MIN_BUDGET = 50000
-MAX_BUDGET = 60000
+MIN_BUDGET = 30000
+MAX_BUDGET = 40000
 PROPERTY_TYPE = "Rent"
 
 # =============================================================================

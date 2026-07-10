@@ -11,6 +11,7 @@ into the page state at every step, without requiring LLM calls:
 """
 
 import asyncio
+import json
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -32,6 +33,15 @@ class AgentTools:
         self._latest_dir = self._debug_dir / "latest"
         self._history_dir = self._debug_dir / "history"
         self._run_dir = self._history_dir / f"run_{self.run_id}"
+
+        # Memory buffers for diagnostics
+        self._console_logs = []
+        self._network_requests = []
+
+        # Hook into page events
+        self.page.on("console", lambda msg: self._console_logs.append(f"[{msg.type}] {msg.text}"))
+        self.page.on("pageerror", lambda err: self._console_logs.append(f"[PAGE_ERROR] {err}"))
+        self.page.on("request", lambda req: self._network_requests.append(f"{req.method} {req.url}"))
 
         self._setup_dirs()
 
@@ -75,6 +85,32 @@ class AgentTools:
         for directory in [self._latest_dir, self._run_dir]:
             path = directory / filename
             path.write_text(content, encoding="utf-8")
+
+    def dump_console(self, step_name: str):
+        """Dump the in-memory console logs to disk."""
+        filename = f"{self._step_counter:03d}_{step_name}_console.txt"
+        filepath = self._latest_dir / filename
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write("\n".join(self._console_logs))
+        print(f"[INSPECT] Dumped console logs for {step_name}")
+        self._step_counter += 1
+        return str(filepath)
+
+    def dump_network(self, step_name: str):
+        """Dump the in-memory network logs to disk."""
+        filename = f"{self._step_counter:03d}_{step_name}_network.txt"
+        filepath = self._latest_dir / filename
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write("\n".join(self._network_requests))
+        print(f"[INSPECT] Dumped network logs for {step_name}")
+        self._step_counter += 1
+        return str(filepath)
+
+    def dump_diagnostic_logs(self, step_name: str):
+        """Dump both console and network logs to disk."""
+        c = self.dump_console(step_name)
+        n = self.dump_network(step_name)
+        return c, n
 
     # -------------------------------------------------------------------------
     # Tool 1: take_debug_screenshot
@@ -234,6 +270,7 @@ class AgentTools:
         # Final failure - capture state before raising
         await self.take_debug_screenshot(f"{step_name}_final_failure")
         await self.dump_dom_around("body", f"{step_name}_final_failure", max_chars=8000)
+        self.dump_diagnostic_logs(f"{step_name}_final_failure")
         raise last_error
 
     # -------------------------------------------------------------------------

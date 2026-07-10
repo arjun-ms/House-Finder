@@ -108,14 +108,27 @@ async def run_pipeline():
     print("\n[STEP 1/4] Launching browser agent...")
     print("-" * 60)
 
-    all_scraped = await run_browser_agent()
-
+    max_retries = 3
+    all_scraped = []
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"[*] Attempt {attempt + 1}/{max_retries}...")
+            all_scraped = await run_browser_agent()
+            if all_scraped:
+                break
+        except Exception as e:
+            print(f"[!] Attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                print("[*] Retrying in 5 seconds...")
+                await asyncio.sleep(5)
+            
     if not all_scraped:
-        print("\n[!] No properties were scraped. Exiting.")
+        print("\n[!] No properties were scraped after multiple attempts. Exiting.")
         print("    Possible causes:")
         print("    - MagicBricks may have blocked the request")
         print("    - Search returned no results for the given criteria")
-        print("    - Network connectivity issues")
+        print("    - Network connectivity issues or flaky UI")
         sys.exit(1)
 
     print(f"\n[STEP 1 COMPLETE] Scraped {len(all_scraped)} properties.")

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Browser Agent - Playwright automation for MagicBricks property scraping.
 
 Handles:
@@ -166,63 +166,23 @@ async def select_rent_tab(page: Page, tools: AgentTools = None):
         await tools.inspect_step("rent_tab", "body")
 
 
-def deduplicate_properties(properties: list[dict]) -> list[dict]:
-    """Remove duplicate properties by listing_url, keeping the first occurrence."""
-    seen_urls = set()
-    unique = []
-    for prop in properties:
-        url = prop.get("listing_url", "")
-        if url and url in seen_urls:
-            continue
-        if url:
-            seen_urls.add(url)
-        unique.append(prop)
-    return unique
+async def fill_location(page: Page, tools: AgentTools = None):
+    """Type partial keyword in the search box, clear existing pills, and select dropdown option."""
+    print(f"[*] Typing '{config.SEARCH_KEYWORD}' in search box...")
 
-
-async def get_dynamic_locations(page: Page, keyword: str, max_locations: int = 3) -> list[str]:
-
-    print(f"[*] Extracting dynamic locations for '{keyword}'...")
-    await page.goto("https://www.magicbricks.com/", timeout=60000)
-    await asyncio.sleep(2)
-    
-    input_box = page.locator("#keyword")
-    await input_box.fill("")
-    await input_box.type(keyword, delay=100)
-    await asyncio.sleep(3)
-    
-    locations = []
-    try:
-        await page.wait_for_selector("#serachSuggest", state="visible", timeout=5000)
-        items = page.locator("#serachSuggest .mb-search__auto-suggest__item")
-        count = await items.count()
-        
-        for i in range(count):
-            text = await items.nth(i).text_content()
-            onclick = await items.nth(i).get_attribute("onclick") or ""
-            if text and "locality" in onclick.lower():
-                locations.append(text.strip())
-                if len(locations) >= max_locations:
-                    break
-    except Exception as e:
-        print(f"[!] Error extracting locations: {e}")
-        locations = [keyword]
-        
-    if not locations:
-        locations = [keyword]
-        
-    print(f"[*] Dynamically found {len(locations)} locations: {locations}")
-    return locations
-
-async def fill_location(page: Page, target_location: str, tools: AgentTools = None):
-    """Type exact keyword in the search box, wait for suggest dropdown, and click the correct item."""
-    print(f"[*] Typing '{target_location}' in search box...")
-
+    # Try multiple possible search input selectors
     search_selectors = [
-        "#keyword", "#suggester-input", "input[placeholder*='locality']",
-        "input[placeholder*='Search']", "input[placeholder*='search']",
-        ".search-input input", ".sugg_input", "#autoSuggest",
-        "input[name='keyword']", ".mb-home__search input", "input[type='text']",
+        "#keyword",
+        "#suggester-input",
+        "input[placeholder*='locality']",
+        "input[placeholder*='Search']",
+        "input[placeholder*='search']",
+        ".search-input input",
+        ".sugg_input",
+        "#autoSuggest",
+        "input[name='keyword']",
+        ".mb-home__search input",
+        "input[type='text']",
     ]
 
     input_element = None
@@ -231,16 +191,19 @@ async def fill_location(page: Page, target_location: str, tools: AgentTools = No
             element = page.locator(selector).first
             if await element.is_visible(timeout=2000):
                 input_element = element
+                print(f"[*] Found search input with selector: {selector}")
                 break
-        except:
+        except Exception:
             continue
 
     if not input_element:
-        raise Exception("Could not find the search input field.")
+        raise Exception("Could not find the search input field on MagicBricks.")
 
+    # Click the input to focus
     await input_element.focus()
     await asyncio.sleep(0.5)
     
+    # Press backspace multiple times to clear any pre-selected location "pills" (e.g., Bangalore)
     print("[*] Clearing existing location pills...")
     for _ in range(5):
         await page.keyboard.press("Backspace")
@@ -249,39 +212,108 @@ async def fill_location(page: Page, target_location: str, tools: AgentTools = No
     await input_element.fill("")
     await asyncio.sleep(0.3)
     
-    print(f"[*] Typing exact keyword: '{target_location}'")
-    await input_element.type(target_location, delay=100)
-    await asyncio.sleep(3)
+    # Type partial keyword (e.g. "Whitefiel" if config is "Whitefield")
+    partial_keyword = config.SEARCH_KEYWORD[:-1] if len(config.SEARCH_KEYWORD) > 4 else config.SEARCH_KEYWORD
+    print(f"[*] Typing partial keyword: '{partial_keyword}'")
+    await input_element.type(partial_keyword, delay=100)
+    await asyncio.sleep(3)  # Wait longer for dropdown suggestions to appear and render
+
+    # Look for the dropdown option containing the keyword
+    print("[*] Looking for dropdown suggestions...")
     
+    selected_count = 0
     try:
+        # Wait for the suggest dropdown container to appear
         await page.wait_for_selector("#serachSuggest", state="visible", timeout=5000)
+        
+        # Get all suggestion items (the actual clickable divs)
         items = page.locator("#serachSuggest .mb-search__auto-suggest__item")
+        await asyncio.sleep(0.5)
         count = await items.count()
-        print(f"[*] Found {count} items in dropdown.")
+        print(f"[*] Found {count} dropdown suggestion items")
         
-        clicked = False
+        # Collect only LOCATION items (onclick contains "locality"), skip Projects
+        location_items = []
         for i in range(count):
-            el = items.nth(i)
-            text = await el.text_content()
-            onclick = await el.get_attribute("onclick") or ""
-            
-            if text:
-                text = text.strip()
-                if target_location.lower() in text.lower() and "locality" in onclick.lower():
-                    print(f"[*] MATCH! Clicking dropdown item: '{text}'")
-                    await el.click()
-                    clicked = True
-                    break
-                    
-        if not clicked:
-            print(f"[!] Could not find any exact locality match for '{target_location}'")
-            await page.keyboard.press("Enter")
-            
-    except Exception as e:
-        print(f"[!] Dropdown error: {e}")
-        await page.keyboard.press("Enter")
+            try:
+                el = items.nth(i)
+                onclick = await el.get_attribute("onclick", timeout=1000)
+                text = await el.text_content(timeout=1000)
+                if onclick and text:
+                    text = text.strip()
+                    is_locality = "locality" in onclick.lower()
+                    has_keyword = config.SEARCH_KEYWORD.lower() in text.lower()
+                    has_city = config.CITY.lower() in text.lower()
+                    print(f"[*]   Item {i}: '{text}' locality={is_locality} keyword={has_keyword} city={has_city}")
+                    if is_locality and has_keyword and has_city:
+                        location_items.append((i, text))
+            except Exception:
+                continue
         
-    await asyncio.sleep(2)
+        # Cap at MAX_LOCATIONS_TO_SELECT
+        location_items = location_items[:config.MAX_LOCATIONS_TO_SELECT]
+        print(f"[*] Will select {len(location_items)} locations: {[t for _, t in location_items]}")
+        
+        # Click each location item
+        for idx, (item_index, text) in enumerate(location_items):
+            try:
+                # After clicking a previous item, the dropdown might close
+                # Re-trigger it by clearing and retyping
+                if idx > 0:
+                    await input_element.click()
+                    await asyncio.sleep(0.3)
+                    await input_element.type(partial_keyword, delay=80)
+                    await asyncio.sleep(3)
+                    # Re-fetch the items since DOM may have refreshed
+                    items = page.locator("#serachSuggest .mb-search__auto-suggest__item")
+                
+                # Find the right item by matching onclick for locality
+                current_count = await items.count()
+                clicked = False
+                for j in range(current_count):
+                    el = items.nth(j)
+                    onclick = await el.get_attribute("onclick", timeout=1000)
+                    el_text = await el.text_content(timeout=1000)
+                    if onclick and el_text and "locality" in onclick.lower() and el_text.strip().lower() == text.lower():
+                        await el.evaluate("el => el.click()")
+                        selected_count += 1
+                        clicked = True
+                        print(f"[*] Selected location: '{text}'")
+                        await asyncio.sleep(1)
+                        break
+                
+                if not clicked:
+                    print(f"[!] Could not re-find item: '{text}'")
+            except Exception as e:
+                print(f"[!] Failed to select '{text}': {e}")
+                
+    except Exception as e:
+        print(f"[!] Error processing dropdown options: {e}")
+
+    if selected_count == 0:
+        # DO NOT press enter. Pressing enter searches default properties (e.g., Buy, Mumbai)
+        raise Exception(f"Could not find any dropdown suggestion for '{config.SEARCH_KEYWORD}'. Aborting to prevent scraping wrong locations.")
+    else:
+        print(f"[*] Successfully selected {selected_count} locations.")
+        if tools:
+            await tools.inspect_step("location_selected", "#keyword_autoSuggestSelectedDiv")
+
+    # Look for a "Done" button after selecting localities (sometimes required, sometimes not)
+    done_selectors = [
+        "button:has-text('Done')",
+        "a:has-text('Done')",
+        ".done-btn",
+    ]
+    for selector in done_selectors:
+        try:
+            element = page.locator(selector).first
+            if await element.is_visible(timeout=1000):
+                await element.evaluate('el => el.click()')
+                await asyncio.sleep(0.5)
+                print("[*] Clicked 'Done' button.")
+                break
+        except Exception:
+            continue
 
 
 async def apply_bhk_filter(page: Page, tools: AgentTools = None):
@@ -393,9 +425,9 @@ async def apply_budget_filter(page: Page, tools: AgentTools = None):
         await tools.inspect_step("budget_filter", ".mb-search__budget")
 
 
-async def apply_more_filters(page: Page, floor_option: str, tools: AgentTools = None):
-    """Click 'More Filters' and select a specific Floor option."""
-    print(f"[*] Applying 'More Filters' (Floor {floor_option})...")
+async def apply_more_filters(page: Page, tools: AgentTools = None):
+    """Click 'More Filters' and select Floor options (9-12, 13-16, 16+)."""
+    print("[*] Applying 'More Filters' (Floor >= 9)...")
     
     more_filters_selectors = [
         ".mb-search__more-filter",
@@ -441,16 +473,17 @@ async def apply_more_filters(page: Page, floor_option: str, tools: AgentTools = 
     except Exception as e:
         print(f"[!] Could not select 'Floor' tab: {e}")
         
-    # Click floor pill
-    try:
-        pill = page.locator(f"text='{floor_option}'").first
-        if await pill.is_visible(timeout=1000):
-            await pill.evaluate('el => el.click()')
-            await asyncio.sleep(0.3)
-            print(f"[*] Selected floor option: {floor_option}")
-    except Exception as e:
-        print(f"[!] Could not select floor '{floor_option}': {e}")
-
+    # Click floor pills
+    floor_options = ["9-12", "13-16", "16+"]
+    for option in floor_options:
+        try:
+            pill = page.locator(f"text='{option}'").first
+            if await pill.is_visible(timeout=1000):
+                await pill.evaluate('el => el.click()')
+                await asyncio.sleep(0.3)
+                print(f"[*] Selected floor option: {option}")
+        except Exception as e:
+            print(f"[!] Could not select floor '{option}': {e}")
             
     # Apply button (sometimes "View X Properties")
     # Apply button (sometimes "View X Properties" or "Apply")
@@ -528,81 +561,115 @@ async def click_search(page: Page, tools: AgentTools = None):
     elif "home-interior" in current_url:
         print("[!] Detected incorrect redirection to home interiors. Attempting direct navigation to rental search...")
         # Construct fallback direct URL for Whitefield, Bangalore, 2BHK, 50k-60k
-        direct_url = f"https://www.magicbricks.com/property-for-rent/residential-real-estate?bedroom=2&proptype=Multistorey-Apartment,Builder-Floor-Apartment,Penthouse,Studio-Apartment&locality={target_location}&budgetMin={config.MIN_BUDGET}&budgetMax={config.MAX_BUDGET}"
+        direct_url = f"https://www.magicbricks.com/property-for-rent/residential-real-estate?bedroom=2&proptype=Multistorey-Apartment,Builder-Floor-Apartment,Penthouse,Studio-Apartment&locality={config.SEARCH_KEYWORD}&budgetMin={config.MIN_BUDGET}&budgetMax={config.MAX_BUDGET}"
         await page.goto(direct_url, wait_until="domcontentloaded")
         await asyncio.sleep(3)
 
 
-
-async def collect_properties_from_srp(page: Page) -> list[dict]:
+async def collect_listing_urls(page: Page) -> list[str]:
     """
-    Collect property data directly from search results cards.
-    Paginates until MAX_LISTINGS_TO_SCRAPE properties are collected.
+    Collect property listing URLs from search results.
+    Paginates until MAX_LISTINGS_TO_SCRAPE URLs are collected.
     """
-    print(f"\\n[*] Collecting properties directly from SRP (target: {config.MAX_LISTINGS_TO_SCRAPE})...")
-    all_properties = []
-    seen_urls = set()
+    print(f"\n[*] Collecting listing URLs (target: {config.MAX_LISTINGS_TO_SCRAPE})...")
+    all_urls: list[str] = []
     page_num = 1
 
-    for page_num in range(1, 10): 
+    while len(all_urls) < config.MAX_LISTINGS_TO_SCRAPE:
         print(f"[*] Scanning search results page {page_num}...")
         await dismiss_popups(page)
         await asyncio.sleep(2)
 
+        # Grab all links on the page, but filter them strictly
+        found_urls = []
         try:
-            cards = await page.locator(".mb-srp__card").all()
-            print(f"[*] Found {len(cards)} property cards on page {page_num}.")
+            # First, try to get links from actual property cards if possible
+            all_links = page.locator(".mb-srp__list a[href], .mb-srp__card a[href], a[data-type='property'], a[href*='/property-details/']")
+            count = await all_links.count()
+            print(f"[*] Found {count} raw links matching selectors on page {page_num}.")
             
-            for card in cards:
-                if len(all_properties) >= config.MAX_LISTINGS_TO_SCRAPE:
-                    break
+            for i in range(count):
+                href = await all_links.nth(i).get_attribute("href")
+                if not href:
+                    continue
+                
+                print(f"  [DEBUG] Raw href: {href}")
                     
-                try:
-                    card_html = await card.inner_html(timeout=1000)
-                    prop_data = parse_srp_card_html(card_html)
+                # Strict filtering to ignore banners, ads, and internal service links
+                href_lower = href.lower()
+                is_valid = False
+                
+                # Check for valid property patterns
+                if "/property-details/" in href_lower or "propertydetail" in href_lower or "/property-for-" in href_lower or "pdpid-" in href_lower:
+                    is_valid = True
                     
-                    if prop_data.get("listing_url"):
-                        url = prop_data["listing_url"]
-                        if url not in seen_urls:
-                            seen_urls.add(url)
-                            all_properties.append(prop_data)
-                            print(f"  [DEBUG] -> Parsed from SRP: {prop_data['property_name']} | ₹{prop_data['price']}")
-                except Exception as e:
-                    pass
-                    
+                # Exclude known bad patterns
+                bad_patterns = [
+                    "home-interior", "pppfs", "javascript:", "tel:", "mailto:", 
+                    "banner", "login", "register", "contact-us"
+                ]
+                for bad in bad_patterns:
+                    if bad in href_lower:
+                        is_valid = False
+                        break
+                        
+                if is_valid:
+                    if href.startswith("/"):
+                        href = config.MAGICBRICKS_URL + href
+                    if href not in all_urls and "magicbricks.com" in href:
+                        found_urls.append(href)
+                        print(f"  [DEBUG] -> VALID: {href}")
+                else:
+                    print(f"  [DEBUG] -> FILTERED OUT")
         except Exception as e:
-            print(f"[!] Error collecting cards: {e}")
+            print(f"[!] Error collecting links: {e}")
 
-        if len(cards) == 0:
-            print(f"[!] No property cards found on page {page_num}. Stopping pagination.")
+        if not found_urls:
+            print(f"[!] No property URLs found on page {page_num}. Stopping pagination.")
             break
 
-        print(f"[*] Total properties collected so far: {len(all_properties)}")
+        # Append unique found_urls to all_urls
+        for u in found_urls:
+            if u not in all_urls and len(all_urls) < config.MAX_LISTINGS_TO_SCRAPE:
+                all_urls.append(u)
+                
+        print(f"[*] Total URLs collected so far: {len(all_urls)}")
 
-        if len(all_properties) >= config.MAX_LISTINGS_TO_SCRAPE:
+        if len(all_urls) >= config.MAX_LISTINGS_TO_SCRAPE:
             break
 
+        # Try to go to next page
         next_clicked = False
-        print("[*] Scrolling down to trigger infinite load...")
-        
-        for _ in range(5):
-            await page.evaluate("window.scrollBy(0, 3000)")
-            await asyncio.sleep(1.5)
-            
-        new_cards = await page.locator(".mb-srp__card").all()
-        if len(new_cards) > len(cards):
-            next_clicked = True
-            page_num += 1
-            print(f"[*] Loaded more items via scroll (Total cards now: {len(new_cards)}).")
+        next_selectors = [
+            "a:has-text('Next')",
+            ".pagination__next",
+            "a[aria-label='Next']",
+            ".nextPage",
+            "a.next",
+            "li.next a",
+        ]
+        for selector in next_selectors:
+            try:
+                element = page.locator(selector).first
+                if await element.is_visible(timeout=3000):
+                    await element.evaluate('el => el.click()')
+                    await page.wait_for_load_state("domcontentloaded")
+                    await asyncio.sleep(3)
+                    next_clicked = True
+                    page_num += 1
+                    print(f"[*] Navigated to page {page_num}.")
+                    break
+            except Exception:
+                continue
 
         if not next_clicked:
-            print("[!] No more properties loaded. Done collecting.")
+            print("[!] No next page button found. Done collecting URLs.")
             break
 
-    return all_properties
-
-
-
+    # Trim to max
+    all_urls = all_urls[: config.MAX_LISTINGS_TO_SCRAPE]
+    print(f"\n[*] Collected {len(all_urls)} listing URLs total.")
+    return all_urls
 
 
 def parse_number(text: str) -> int | float | None:
@@ -611,8 +678,8 @@ def parse_number(text: str) -> int | float | None:
         return None
     # Remove commas and extra spaces
     text = text.replace(",", "").strip()
-    # Find all actual numbers (int or float) avoiding stray periods
-    numbers = re.findall(r"\d+(?:\.\d+)?", text)
+    # Find all numbers (int or float)
+    numbers = re.findall(r"[\d.]+", text)
     if numbers:
         try:
             val = float(numbers[0])
@@ -621,90 +688,6 @@ def parse_number(text: str) -> int | float | None:
             return None
     return None
 
-
-def parse_srp_card_html(card_html: str) -> dict:
-    """Parse property data directly from an SRP card HTML string."""
-    property_data = {
-        "property_name": None,
-        "price": None,
-        "location": None,
-        "bhk_config": None,
-        "floor_number": None,
-        "total_floors": None,
-        "property_age": None,
-        "balcony_count": None,
-        "built_up_area": None,
-        "furnishing_status": None,
-        "amenities": [],
-        "deposit_amount": None,
-        "builder_society": None,
-        "listing_url": None,
-    }
-    
-    # URL
-    url_match = re.search(r'href="([^"]+)"', card_html)
-    if url_match:
-        url = url_match.group(1)
-        if url.startswith("/"):
-            url = config.MAGICBRICKS_URL + url
-        property_data["listing_url"] = url
-
-    # Property Name / Title
-    title_match = re.search(r'class="[^"]*title[^"]*"[^>]*>(.*?)</h2>', card_html, re.DOTALL | re.IGNORECASE)
-    if title_match:
-        title = re.sub(r'<[^>]+>', '', title_match.group(1)).strip()
-        property_data["property_name"] = title
-        if "BHK" in title:
-            bhk_match = re.search(r'(\d+)\s*BHK', title)
-            if bhk_match:
-                property_data["bhk_config"] = f"{bhk_match.group(1)} BHK"
-    
-    # Rent Price
-    price_match = re.search(r'class="[^"]*price--amount[^"]*"[^>]*>(.*?)</div>', card_html, re.DOTALL | re.IGNORECASE)
-    if price_match:
-        price_text = re.sub(r'<[^>]+>', '', price_match.group(1)).strip()
-        price_text = price_text.replace(",", "")
-        num_match = re.search(r'(\d+)', price_text)
-        if num_match:
-            property_data["price"] = int(num_match.group(1))
-
-    # Summary data (Floor, Area, Furnishing, Balcony)
-    summary_items = re.findall(r'class="[^"]*summary--label[^"]*"[^>]*>(.*?)</div>\s*<div class="[^"]*summary--value[^"]*"[^>]*>(.*?)</div>', card_html, re.DOTALL | re.IGNORECASE)
-    
-    for label, value in summary_items:
-        label = re.sub(r'<[^>]+>', '', label).strip().lower()
-        value = re.sub(r'<[^>]+>', '', value).strip()
-        
-        if "floor" in label:
-            floor_match = re.search(r'(\d+)\s*(?:out of|/|of)\s*(\d+)', value)
-            if floor_match:
-                property_data["floor_number"] = int(floor_match.group(1))
-                property_data["total_floors"] = int(floor_match.group(2))
-            else:
-                num = parse_number(value)
-                if num:
-                    property_data["floor_number"] = int(num)
-        
-        elif "area" in label:
-            property_data["built_up_area"] = value
-            
-        elif "furnish" in label:
-            property_data["furnishing_status"] = value
-            
-        elif "balcon" in label:
-            num = parse_number(value)
-            if num:
-                property_data["balcony_count"] = int(num)
-                
-    # Also check if balcony is mentioned in its own label
-    balcony_match = re.search(r'Balconies?</div>\s*<div[^>]*>(.*?)</div>', card_html, re.IGNORECASE)
-    if balcony_match and property_data["balcony_count"] is None:
-        b = re.sub(r'<[^>]+>', '', balcony_match.group(1)).strip()
-        num = parse_number(b)
-        if num:
-            property_data["balcony_count"] = int(num)
-
-    return property_data
 
 async def scrape_property_detail(context, url: str, index: int, total: int) -> dict | None:
     """
@@ -826,8 +809,6 @@ async def scrape_property_detail(context, url: str, index: int, total: int) -> d
         # --- Extract from detail/info table rows ---
         # MagicBricks often shows details in key-value pairs
         detail_selectors = [
-            ".mb-srp__card:nth-child(1) .mb-srp__card__summary__list--item",
-            ".mb-srp__card__summary__list--item",
             ".mb-ldp__dtls li",
             ".mb-ldp__more--dtl li",
             ".propInfoList li",
@@ -852,8 +833,6 @@ async def scrape_property_detail(context, url: str, index: int, total: int) -> d
                     break
             except Exception:
                 continue
-
-        print(f"DETAIL TEXTS FOUND: {detail_texts}")
 
         # Parse detail texts for specific fields
         for text in detail_texts:
@@ -959,17 +938,20 @@ async def scrape_property_detail(context, url: str, index: int, total: int) -> d
             pass
 
 
-
 async def run_browser_agent() -> list[dict]:
     """
-    Full browser automation pipeline looping over specific localities.
+    Full browser automation pipeline:
+    1. Launch browser
+    2. Navigate to MagicBricks
+    3. Fill search form (Rent, Whitefield, 2BHK, budget)
+    4. Collect listing URLs
+    5. Scrape each property detail page
+    6. Return list of property data dicts
     """
     from playwright.async_api import async_playwright
     
-    properties = []
-    failed_count = 0
-    
     async with async_playwright() as playwright:
+        # Launch browser manually instead of using launch_browser to keep it in context
         browser = await playwright.chromium.launch(
             headless=not config.HEADED,
             args=["--disable-blink-features=AutomationControlled", "--no-sandbox"]
@@ -981,105 +963,105 @@ async def run_browser_agent() -> list[dict]:
         )
         page = await context.new_page()
         
+        # Block annoying redirects and popups
         async def block_ads(route):
             url = route.request.url
             if "home-interior" in url.lower() or "hp_toolsandadvicesection" in url.lower():
+                print(f"[!] Blocked background network request to ad/banner: {url}")
                 await route.abort()
             else:
                 await route.continue_()
                 
         await context.route("**/*", block_ads)
         
-        # Dynamically discover matching localities from the dropdown
-        locations_to_test = await get_dynamic_locations(page, config.SEARCH_KEYWORD, max_locations=config.MAX_LOCATIONS_TO_SELECT)
-        
-        for loc in locations_to_test:
-            print(f"\\n{'='*60}\\nScraping Location: {loc}\\n{'='*60}")
-            page = await context.new_page()
-            
-            async def handle_new_page(new_page):
-                try:
-                    opener = await new_page.opener()
-                    if opener is not None:
-                        await new_page.close()
-                except:
-                    pass
-            context.on("page", lambda p: asyncio.create_task(handle_new_page(p)))
-            page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
-            
-            tools = AgentTools(page)
-            
+        async def handle_new_page(new_page):
             try:
-                await navigate_to_magicbricks(page, tools)
-                await random_delay()
-                await select_rent_tab(page, tools)
-                await random_delay()
-                
-                # Fill the specific location
-                target_location = loc
-                config.MAX_LOCATIONS_TO_SELECT = 1
-                await fill_location(page, loc, tools)
-                await random_delay()
-                
-                await apply_bhk_filter(page, tools)
-                await random_delay()
-                
-                await apply_budget_filter(page, tools)
-                await random_delay()
-                
-                await click_search(page, tools)
-                await random_delay()
-                
-                # Wait for search results
-                await page.wait_for_selector(".mb-srp__list", state="attached", timeout=config.PAGE_LOAD_TIMEOUT)
-                await asyncio.sleep(2)
-                
-                # Apply exact Owner filter via XPath
-                print("[*] Attempting to click 'Owners' filter via XPath...")
+                opener = await new_page.opener()
+                if opener is not None:
+                    print(f"[!] Blocked unexpected popup tab (Likely an Ad).")
+                    await new_page.close()
+            except Exception:
+                pass
+                    
+        context.on("page", lambda p: asyncio.create_task(handle_new_page(p)))
+        page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
+
+        # Initialize agent inspection tools
+        tools = AgentTools(page)
+
+        try:
+            # Step 1: Navigate and setup
+            await navigate_to_magicbricks(page, tools)
+            await random_delay()
+
+            # Step 2: Select Rent tab
+            await select_rent_tab(page, tools)
+            await random_delay()
+
+            # Step 3: Fill location
+            await fill_location(page, tools)
+            await random_delay()
+
+            # Step 4: Apply BHK filter
+            await apply_bhk_filter(page, tools)
+            await random_delay()
+
+            # Step 5: Apply budget filter
+            await apply_budget_filter(page, tools)
+            await random_delay()
+
+            # Step 5.5: Execute search first (More Filters is only on the search results page)
+            await click_search(page, tools)
+            await tools.inspect_step("search_results", "body")
+            await random_delay()
+
+            # Step 6: Apply more filters (Floor) on the Search Results Page
+            await apply_more_filters(page, tools)
+            await random_delay()
+
+            # Step 7: Collect listing URLs
+            listing_urls = await collect_listing_urls(page)
+
+            if not listing_urls:
+                print("\n[!] No listing URLs found. The search may have returned no results.")
+                await tools.inspect_step("no_results", "body")
+                return []
+
+            # Step 8: Scrape each property detail page
+            print(f"\n{'='*60}")
+            print(f"SCRAPING {len(listing_urls)} PROPERTY DETAIL PAGES")
+            print(f"{'='*60}\n")
+
+            properties = []
+            failed_count = 0
+
+            for i, url in enumerate(listing_urls, 1):
                 try:
-                    posted_by = page.locator("xpath=/html/body/div/div/div/div[2]/div[1]/div/div[2]/div[5]/div")
-                    if await posted_by.count() > 0:
-                        await posted_by.first.click()
-                        await asyncio.sleep(2)
-                        owners_label = page.locator("label", has_text="Owners")
-                        if await owners_label.count() > 0:
-                            await owners_label.first.click()
-                            await asyncio.sleep(1)
-                            done_btn = page.locator("div", has_text="Done").last
-                            await done_btn.click()
-                            print("[*] Clicked 'Owners' and 'Done'!")
-                            await asyncio.sleep(5)
-                        else:
-                            print("[!] Could not find Owners label")
-                    else:
-                        print("[!] Could not find 'Posted By' filter via XPath")
+                    property_data = await asyncio.wait_for(
+                        scrape_property_detail(context, url, i, len(listing_urls)), 
+                        timeout=45.0
+                    )
+                except asyncio.TimeoutError:
+                    print(f"[{i}/{len(listing_urls)}] FAILED (Hard Timeout: 45s), skipping")
+                    property_data = None
                 except Exception as e:
-                    print(f"[!] Error clicking Owner filter: {e}")
-                
-                # Collect Properties directly from Search Results Page
-                props = await collect_properties_from_srp(page)
-                
-                if not props:
-                    print(f"[!] No properties collected for {loc}")
-                    await page.close()
-                    continue
+                    print(f"[{i}/{len(listing_urls)}] FAILED (Outer Error: {e}), skipping")
+                    property_data = None
                     
-                print(f"[*] Collected {len(props)} properties for {loc}!")
-                properties.extend(props)
+                if property_data:
+                    properties.append(property_data)
+                else:
+                    failed_count += 1
+                await random_delay()
 
-                    
-            except Exception as e:
-                print(f"[!] Critical error in location loop {loc}: {e}")
-            finally:
-                await page.close()
-                
-        print(f"\\n{'='*60}\\nALL LOCATIONS SCRAPED\\n  Succeeded: {len(properties)}\\n  Failed: {failed_count}\\n{'='*60}\\n")
-        
-        # Deduplicate properties from overlapping location searches
-        before_dedup = len(properties)
-        properties = deduplicate_properties(properties)
-        if before_dedup != len(properties):
-            print(f"[*] Deduplication: {before_dedup} -> {len(properties)} unique properties")
-        
-        return properties
+            print(f"\n{'='*60}")
+            print(f"SCRAPING COMPLETE")
+            print(f"  Succeeded: {len(properties)}")
+            print(f"  Failed: {failed_count}")
+            print(f"{'='*60}\n")
 
+            return properties
+
+        finally:
+            # Context manager will cleanly close browser and playwright
+            pass

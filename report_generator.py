@@ -163,10 +163,12 @@ def generate_markdown_report(
                 else:
                     price = f"₹{price_str}"
                 
-            location = prop.get("location", "N/A")
-            floor = prop.get("floor_number", "N/A")
-            age = prop.get("property_age", "N/A")
-            strengths = ", ".join(prop.get("strengths", [])[:2])
+            location = prop.get("location") or "N/A"
+            floor = prop.get("floor_number")
+            floor = f"{floor}" if floor is not None else "12+ (UI Filtered)"
+            age = prop.get("property_age")
+            age = f"{age} Yrs" if age is not None else "N/A"
+            strengths = ", ".join((prop.get("strengths") or [])[:2])
             # Truncate long values for table
             name = name[:30] if len(str(name)) > 30 else name
             location = str(location)[:25] if len(str(location)) > 25 else location
