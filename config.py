@@ -1,0 +1,79 @@
+"""
+Configuration constants for the House Finder browser agent.
+Edit these values to tweak search criteria and agent behavior.
+"""
+
+# =============================================================================
+# SEARCH CRITERIA (Stage 1 - Applied via MagicBricks UI)
+# =============================================================================
+
+SEARCH_KEYWORD = "Whitefield"
+BHK_TYPE = "2 BHK"
+MIN_BUDGET = 50000
+MAX_BUDGET = 60000
+PROPERTY_TYPE = "Rent"
+
+# =============================================================================
+# FILTER CRITERIA (Stage 2 - Applied programmatically after scraping)
+# =============================================================================
+
+MIN_FLOOR = 12              # 12th floor and above
+MAX_PROPERTY_AGE = 5        # Property age <= 5 years
+REQUIRE_BALCONY = True      # Must have at least 1 balcony
+
+# =============================================================================
+# SCRAPING BEHAVIOR
+# =============================================================================
+
+MAX_LISTINGS_TO_SCRAPE = 10        # Total listings to scrape from search results
+TARGET_SHORTLIST = 2               # Target number of properties after filtering
+PAGE_LOAD_TIMEOUT = 30000           # Page load timeout in milliseconds
+DETAIL_PAGE_TIMEOUT = 15000         # Timeout for property detail page elements
+MIN_DELAY = 2                       # Minimum seconds between page navigations
+MAX_DELAY = 5                       # Maximum seconds between page navigations
+
+# =============================================================================
+# BROWSER SETTINGS
+# =============================================================================
+
+VIEWPORT_WIDTH = 1366
+VIEWPORT_HEIGHT = 768
+HEADED = False                       # Run browser in headless mode
+RECORD_VIDEO = True                 # Record browser session
+VIDEO_DIR = "output"
+
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/131.0.0.0 Safari/537.36"
+)
+
+# =============================================================================
+# MAGICBRICKS URLs
+# =============================================================================
+
+MAGICBRICKS_URL = "https://www.magicbricks.com"
+
+# =============================================================================
+# LLM SETTINGS
+# =============================================================================
+
+GEMINI_MODEL = "gemini-2.0-flash"   # Used for ranking and recommendations for LLM ranking (must sum to 1.0)
+
+# Scoring weights for LLM ranking (must sum to 1.0)
+SCORING_WEIGHTS = {
+    "rent_value": 0.30,         # Rent value for money (rent vs area, furnishing)
+    "floor_preference": 0.25,   # Higher floors preferred, 12+ required
+    "property_age": 0.20,       # Newer = better, <= 5 years required
+    "location_quality": 0.15,   # Closer to Whitefield center = better
+    "amenities": 0.10,          # Balcony quality, gym, parking, etc.
+}
+
+# =============================================================================
+# OUTPUT SETTINGS
+# =============================================================================
+
+OUTPUT_DIR = "output"
+RESULTS_JSON = "output/results.json"
+REPORT_MD = "output/report.md"
+REPORT_HTML = "output/report.html"
