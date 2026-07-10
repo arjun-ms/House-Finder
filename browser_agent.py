@@ -92,12 +92,13 @@ async def launch_browser():
     page = await context.new_page()
     
     async def handle_new_page(new_page: Page):
-        if new_page != page:
-            print(f"[!] Blocked unexpected new tab (Likely an Ad).")
-            try:
+        try:
+            opener = await new_page.opener()
+            if opener is not None:
+                print(f"[!] Blocked unexpected popup tab (Likely an Ad).")
                 await new_page.close()
-            except:
-                pass
+        except Exception:
+            pass
                 
     context.on("page", lambda p: asyncio.create_task(handle_new_page(p)))
     
@@ -746,7 +747,8 @@ async def scrape_property_detail(context, url: str, index: int, total: int) -> d
         ]
         
         def parse_price(text: str) -> int | None:
-            if not text: return None
+            if not text:
+                return None
             text = text.replace(",", "").strip()
             
             # If "Rent" is in the text, try to extract the number after it
@@ -761,9 +763,12 @@ async def scrape_property_detail(context, url: str, index: int, total: int) -> d
                 try:
                     val = float(match.group(1))
                     unit = (match.group(2) or "").lower()
-                    if "cr" in unit: val *= 10000000
-                    elif "lac" in unit or "lakh" in unit: val *= 100000
-                    elif "k" in unit: val *= 1000
+                    if "cr" in unit:
+                        val *= 10000000
+                    elif "lac" in unit or "lakh" in unit:
+                        val *= 100000
+                    elif "k" in unit:
+                        val *= 1000
                     return int(val)
                 except ValueError:
                     pass
@@ -970,12 +975,13 @@ async def run_browser_agent() -> list[dict]:
         await context.route("**/*", block_ads)
         
         async def handle_new_page(new_page):
-            if new_page != page:
-                print(f"[!] Blocked unexpected new tab (Likely an Ad).")
-                try:
+            try:
+                opener = await new_page.opener()
+                if opener is not None:
+                    print(f"[!] Blocked unexpected popup tab (Likely an Ad).")
                     await new_page.close()
-                except:
-                    pass
+            except Exception:
+                pass
                     
         context.on("page", lambda p: asyncio.create_task(handle_new_page(p)))
         page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
