@@ -14,6 +14,7 @@ import re
 from playwright.async_api import async_playwright, Page, Browser, BrowserContext
 
 import config
+from agent_tools import AgentTools
 
 
 async def random_delay():
@@ -116,16 +117,18 @@ async def launch_browser():
     return playwright, browser, context, page
 
 
-async def navigate_to_magicbricks(page: Page):
+async def navigate_to_magicbricks(page: Page, tools: AgentTools = None):
     """Navigate to MagicBricks homepage and dismiss any initial popups."""
     print("[*] Navigating to MagicBricks...")
     await page.goto(config.MAGICBRICKS_URL, wait_until="domcontentloaded")
     await asyncio.sleep(3)  # Let page fully render
     await dismiss_popups(page)
+    if tools:
+        await tools.inspect_step("navigate", "body")
     print("[*] MagicBricks homepage loaded.")
 
 
-async def select_rent_tab(page: Page):
+async def select_rent_tab(page: Page, tools: AgentTools = None):
     """Click the Rent tab to switch to rental search mode."""
     print("[*] Selecting 'Rent' tab...")
     
@@ -158,9 +161,11 @@ async def select_rent_tab(page: Page):
         except Exception:
             continue
     print("[!] Could not find Rent tab, proceeding anyway (may already be on Rent).")
+    if tools:
+        await tools.inspect_step("rent_tab", "body")
 
 
-async def fill_location(page: Page):
+async def fill_location(page: Page, tools: AgentTools = None):
     """Type partial keyword in the search box, clear existing pills, and select dropdown option."""
     print(f"[*] Typing '{config.SEARCH_KEYWORD}' in search box...")
 
@@ -289,6 +294,8 @@ async def fill_location(page: Page):
         raise Exception(f"Could not find any dropdown suggestion for '{config.SEARCH_KEYWORD}'. Aborting to prevent scraping wrong locations.")
     else:
         print(f"[*] Successfully selected {selected_count} locations.")
+        if tools:
+            await tools.inspect_step("location_selected", "#keyword_autoSuggestSelectedDiv")
 
     # Look for a "Done" button after selecting localities (sometimes required, sometimes not)
     done_selectors = [
@@ -308,7 +315,7 @@ async def fill_location(page: Page):
             continue
 
 
-async def apply_bhk_filter(page: Page):
+async def apply_bhk_filter(page: Page, tools: AgentTools = None):
     """Select 2 BHK exclusively from the BHK filter options."""
     print("[*] Applying BHK filter (2 BHK only)...")
     
@@ -340,12 +347,14 @@ async def apply_bhk_filter(page: Page):
                         await asyncio.sleep(0.2)
         
         print("[*] 2 BHK filter applied exclusively.")
+        if tools:
+            await tools.inspect_step("bhk_filter", ".mb-search__property")
         return
     except Exception as e:
         print(f"[!] Could not apply BHK filter, proceeding without it. Error: {e}")
 
 
-async def apply_budget_filter(page: Page):
+async def apply_budget_filter(page: Page, tools: AgentTools = None):
     """Set the budget range filter (50k-60k)."""
     print(f"[*] Applying budget filter ({config.MIN_BUDGET}-{config.MAX_BUDGET})...")
 
@@ -411,9 +420,11 @@ async def apply_budget_filter(page: Page):
         pass
 
     print("[*] Budget filter applied.")
+    if tools:
+        await tools.inspect_step("budget_filter", ".mb-search__budget")
 
 
-async def click_search(page: Page):
+async def click_search(page: Page, tools: AgentTools = None):
     """Click the search button to execute the search."""
     print("[*] Clicking Search button...")
     search_btn_selectors = [
@@ -823,29 +834,33 @@ async def run_browser_agent() -> list[dict]:
         )
         page = await context.new_page()
 
+        # Initialize agent inspection tools
+        tools = AgentTools(page)
+
         try:
             # Step 1: Navigate and setup
-            await navigate_to_magicbricks(page)
+            await navigate_to_magicbricks(page, tools)
             await random_delay()
 
             # Step 2: Select Rent tab
-            await select_rent_tab(page)
+            await select_rent_tab(page, tools)
             await random_delay()
 
             # Step 3: Fill location
-            await fill_location(page)
+            await fill_location(page, tools)
             await random_delay()
 
             # Step 4: Apply BHK filter
-            await apply_bhk_filter(page)
+            await apply_bhk_filter(page, tools)
             await random_delay()
 
             # Step 5: Apply budget filter
-            await apply_budget_filter(page)
+            await apply_budget_filter(page, tools)
             await random_delay()
 
             # Step 6: Execute search
-            await click_search(page)
+            await click_search(page, tools)
+            await tools.inspect_step("search_results", "body")
             await random_delay()
 
             # Step 7: Collect listing URLs
@@ -853,6 +868,7 @@ async def run_browser_agent() -> list[dict]:
 
             if not listing_urls:
                 print("\n[!] No listing URLs found. The search may have returned no results.")
+                await tools.inspect_step("no_results", "body")
                 return []
 
             # Step 8: Scrape each property detail page

@@ -32,3 +32,6 @@ Thumbs.db
 .DS_Store
 
 notes/
+
+# Debug artifacts (screenshots, DOM dumps)
+debug/

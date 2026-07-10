@@ -44,6 +44,13 @@ HEADED = False                       # Run browser in headless mode
 RECORD_VIDEO = True                 # Record browser session
 VIDEO_DIR = "output"
 
+# =============================================================================
+# AGENT INSPECTION / DEBUG SETTINGS
+# =============================================================================
+
+MAX_DEBUG_RUNS = 5                  # Keep last N debug runs in debug/history/
+DEBUG_DIR = "debug"                 # Root debug artifacts directory
+
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
