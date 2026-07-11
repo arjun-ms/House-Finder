@@ -19,8 +19,8 @@ import sys
 from datetime import datetime
 
 import config
-from browser_agent import run_browser_agent
-# from smart_browser_agent import run_browser_agent
+# from browser_agent import run_browser_agent
+from smart_browser_agent import run_browser_agent
 from data_filter import filter_properties
 from llm_recommender import rank_properties
 from report_generator import generate_all_reports
@@ -115,7 +115,9 @@ async def run_pipeline():
     for attempt in range(max_retries):
         try:
             print(f"[*] Attempt {attempt + 1}/{max_retries}...")
+
             all_scraped = await run_browser_agent()
+            
             if all_scraped:
                 break
         except Exception as e:

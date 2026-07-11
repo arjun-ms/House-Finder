@@ -210,6 +210,7 @@ class AgentTools:
 
                 el_text = await el.text_content(timeout=500)
                 classes = await el.evaluate("el => el.className || ''")
+                el_id = await el.evaluate("el => el.id || ''")
                 onclick = await el.get_attribute("onclick") or ""
                 href = await el.get_attribute("href") or ""
 
@@ -217,6 +218,7 @@ class AgentTools:
                     "index": i,
                     "tag": tag,
                     "class": classes,
+                    "id": el_id,
                     "text": el_text.strip() if el_text else "",
                     "onclick": onclick[:150],
                     "href": href[:150],
