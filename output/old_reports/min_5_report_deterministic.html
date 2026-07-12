@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Finder - Property Recommendation Report</title>
+    <style>
+        :root {
+            --bg-primary: #0f1117;
+            --bg-secondary: #1a1d2e;
+            --bg-card: #222640;
+            --text-primary: #e8eaf0;
+            --text-secondary: #a0a4b8;
+            --accent-primary: #6366f1;
+            --accent-secondary: #818cf8;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-color: #2d3154;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-secondary);
+            margin-top: 48px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        em {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        a {
+            color: var(--accent-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--accent-gold);
+            text-decoration: underline;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 32px 0;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            padding: 8px 0 8px 20px;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 16px;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+        }
+
+        ul li strong {
+            color: var(--text-primary);
+        }
+
+        /* Best Pick Section */
+        h2 + h3 {
+            background: var(--bg-card);
+            padding: 20px 24px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-gold);
+            margin-top: 0;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 32px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        thead {
+            background: var(--bg-card);
+        }
+
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-secondary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* Score badge */
+        td:nth-child(3) {
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* Scrollable table wrapper */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 64px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="house-finder-property-recommendation-report">House Finder - Property Recommendation Report</h1>
+<p><em>Generated: 2026-07-11 20:04</em></p>
+<hr />
+<h2 id="search-criteria">Search Criteria</h2>
+<ul>
+<li><strong>Location:</strong> Whitefield, Bangalore</li>
+<li><strong>Type:</strong> 2 BHK Apartment for Rent</li>
+<li><strong>Budget:</strong> Rs 30,000 - Rs 40,000/month</li>
+<li><strong>Floor:</strong> 5th floor and above</li>
+<li><strong>Property Age:</strong> 15 years or newer</li>
+<li><strong>Balcony:</strong> Required</li>
+</ul>
+<h2 id="scraping-summary">Scraping Summary</h2>
+<ul>
+<li>Total properties scraped: <strong>15</strong></li>
+<li>Passed Stage 2 filters: <strong>5</strong></li>
+<li>Excluded: <strong>10</strong></li>
+</ul>
+<hr />
+<h2 id="best-pick">Best Pick</h2>
+<h3 id="2-bhk-apartment-for-rent-in-whitefield-bangalore">2 BHK Apartment for Rent in Whitefield Bangalore</h3>
+<p><strong>Score: 9.2/10</strong></p>
+<p>This property is the absolute best choice because it is the only listing that fully satisfies all user requirements with verified data. At 10 years old, it fits perfectly within the 15-year age preference, and the 13th-floor unit exceeds the 5th-floor requirement, providing excellent views. With 1307 sqft of built-up area and 3 balconies, it offers superior living space compared to other options in the list. Its location in Whitefield is ideal, and while it sits at the higher end of the budget, the value provided by the space and modern building standards makes it the most cost-effective and comfortable choice for a long-term tenant.</p>
+<p><a href="https://www.magicbricks.com/alpine-viva-whitefield-bangalore-pdpid-4d4235303233393337">View on MagicBricks</a></p>
+<hr />
+<h2 id="top-3-recommendations">Top 3 Recommendations</h2>
+<h3 id="1-2-bhk-apartment-for-rent-in-whitefield-bangalore">#1: 2 BHK Apartment for Rent in Whitefield Bangalore</h3>
+<p><strong>Score: 9.2/10</strong></p>
+<p>This property is the only one with complete data, confirming it meets all criteria including age, floor, and balcony requirements. It offers the best balance of space and location within the specified budget.</p>
+<p><a href="https://www.magicbricks.com/alpine-viva-whitefield-bangalore-pdpid-4d4235303233393337">View on MagicBricks</a></p>
+<h3 id="2-2-bhk-apartment-for-rent-in-whitefield-bangalore">#2: 2 BHK Apartment for Rent in Whitefield Bangalore</h3>
+<p><strong>Score: 7.8/10</strong></p>
+<p>A strong runner-up offering a generous floor plan and a good floor level within the heart of Whitefield. It provides excellent value for money at 34,000 per month.</p>
+<p><a href="https://www.magicbricks.com/gk-tropical-springs-whitefield-bangalore-pdpid-4d4235303333343137">View on MagicBricks</a></p>
+<h3 id="3-2-bhk-apartment-for-rent-in-varthur-bangalore">#3: 2 BHK Apartment for Rent in Varthur Bangalore</h3>
+<p><strong>Score: 7.5/10</strong></p>
+<p>Located in Varthur, this property offers a comfortable 6th-floor unit with a decent layout. It is a reliable option if proximity to the Varthur-Whitefield corridor is preferred.</p>
+<p><a href="https://www.magicbricks.com/upscale-golden-lotus-varthur-bangalore-pdpid-4d4235303933343731">View on MagicBricks</a></p>
+<hr />
+<h2 id="all-shortlisted-properties">All Shortlisted Properties</h2>
+<table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Property</th>
+<th>Score</th>
+<th>Price</th>
+<th>Config</th>
+<th>Area</th>
+<th>Furnished</th>
+<th>Location</th>
+<th>Floor</th>
+<th>Age</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>2 BHK Apartment for Rent in Wh</td>
+<td>9.2</td>
+<td>₹39,000</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Whitefield</td>
+<td>13</td>
+<td>10 Yrs</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2 BHK Apartment for Rent in Wh</td>
+<td>7.8</td>
+<td>₹34,000</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Whitefield</td>
+<td>9</td>
+<td>unknown Yrs</td>
+</tr>
+<tr>
+<td>3</td>
+<td>2 BHK Apartment for Rent in Va</td>
+<td>7.5</td>
+<td>₹35,000</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Varthur</td>
+<td>6</td>
+<td>unknown Yrs</td>
+</tr>
+<tr>
+<td>4</td>
+<td>2 BHK Apartment for Rent in It</td>
+<td>7.2</td>
+<td>₹34,000</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Whitefield</td>
+<td>12</td>
+<td>unknown Yrs</td>
+</tr>
+<tr>
+<td>5</td>
+<td>2 BHK Apartment for Rent in Kr</td>
+<td>6.8</td>
+<td>₹40,000</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Krishnarajapura</td>
+<td>25</td>
+<td>unknown Yrs</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="excluded-properties">Excluded Properties</h2>
+<p>Properties that did not pass Stage 2 filters:</p>
+<ul>
+<li><strong>2 BHK Apartment for Rent in Whitefield Bangalore</strong>: Floor 2 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Whitefield Bangalore</strong>: Floor 4 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Whitefield Bangalore</strong>: Floor 1 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Channasandra Bangalore</strong>: Floor 4 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Whitefield Bangalore</strong>: Floor 1 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Whitefield Bangalore</strong>: Floor 2 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Kadugodi Bangalore</strong>: Floor 4 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Krishnarajapura Bangalore</strong>: Floor 2 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Hoodi, Hoodi Bangalore</strong>: Floor 1 &lt; 5 (excluded)</li>
+<li><strong>2 BHK Apartment for Rent in Hoodi, Hoodi Bangalore</strong>: Floor 1 &lt; 5 (excluded)</li>
+</ul>
+        <div class="footer">
+            <p>Generated by House Finder Browser Agent</p>
+        </div>
+    </div>
+</body>
+</html>

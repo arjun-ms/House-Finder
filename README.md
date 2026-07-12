@@ -2,6 +2,10 @@
 
 A highly robust, 3-phase AI automation pipeline that searches MagicBricks for 2BHK rental apartments in Bangalore, extracts property details directly from the DOM, strictly filters them based on programmatic heuristics, and uses a Google Gemini Cognitive Engine to rank and recommend the top properties.
 
+## View the demo video below
+
+
+
 ## What It Does (The 3-Phase Pipeline)
 
 1. **Phase 1: Deterministic Fast-Path Scraping (Playwright)**

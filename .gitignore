@@ -35,3 +35,7 @@ notes/
 
 # Debug artifacts (screenshots, DOM dumps)
 debug/
+
+output/recordings/*
+
+demo.mp4

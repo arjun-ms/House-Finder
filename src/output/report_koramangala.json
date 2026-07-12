@@ -1,0 +1,282 @@
+{
+  "generated_at": "2026-07-12T15:42:01.963961",
+  "search_criteria": {
+    "location": "Koramangala, Bangalore",
+    "bhk": "2 BHK",
+    "budget_min": 30000,
+    "budget_max": 40000,
+    "min_floor": 5,
+    "max_property_age": 15,
+    "require_balcony": true
+  },
+  "stats": {
+    "total_scraped": 6,
+    "passed_filters": 0,
+    "excluded": 6
+  },
+  "llm_ranking": {
+    "shortlisted_10": [],
+    "top_3": [],
+    "best_pick": {
+      "property_name": "None",
+      "why": "No properties passed after deep scraping."
+    }
+  },
+  "all_scraped_properties": [
+    {
+      "property_name": "2 BHK Apartment for Rent in Koramangala Bangalore",
+      "price": 40000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": 3,
+      "total_floors": 18,
+      "property_age": null,
+      "balcony_count": 2,
+      "built_up_area": "959 sqft",
+      "furnishing_status": "Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/mantri-classic-koramangala-bangalore-pdpid-4d4235303030363930"
+    },
+    {
+      "property_name": "2 BHK Apartment for Rent in Koramangala Bangalore",
+      "price": 35000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": 3,
+      "total_floors": 14,
+      "property_age": null,
+      "balcony_count": 2,
+      "built_up_area": "959 sqft",
+      "furnishing_status": "Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/prestige-pinewood-koramangala-bangalore-pdpid-4d4235303738373238"
+    },
+    {
+      "property_name": "2 BHK Apartment for Rent in Koramangala Bangalore",
+      "price": 30000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": 2,
+      "total_floors": 8,
+      "property_age": null,
+      "balcony_count": 2,
+      "built_up_area": "1500 sqft",
+      "furnishing_status": "Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/embassy-meadows-koramangala-bangalore-pdpid-4d4235303037373933"
+    },
+    {
+      "property_name": "2 BHK Apartment for Rent in Koramangala Bangalore",
+      "price": 36000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": 2,
+      "total_floors": 4,
+      "property_age": null,
+      "balcony_count": 3,
+      "built_up_area": "840 sqft",
+      "furnishing_status": "Semi-Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/bildens-swarganga-koramangala-bangalore-pdpid-4d4235303339373236"
+    },
+    {
+      "property_name": "2 BHK  House for Rent in Koramangala Bangalore",
+      "price": 35000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": null,
+      "total_floors": null,
+      "property_age": null,
+      "balcony_count": 1,
+      "built_up_area": "1000 sqft",
+      "furnishing_status": "Semi-Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/mig-khb-colony-koramangala-bangalore-pdpid-4d4235303038353637"
+    },
+    {
+      "property_name": "2 BHK  House for Rent in Block 5th Koramangala Bangalore",
+      "price": 40000,
+      "location": "Block 5th Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": null,
+      "total_floors": null,
+      "property_age": null,
+      "balcony_count": null,
+      "built_up_area": "1100 sqft",
+      "furnishing_status": "Semi-Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/mig-khb-colony-koramangala-block-5-bangalore-pdpid-4d4235303038353637"
+    }
+  ],
+  "filtered_properties": [],
+  "excluded_properties": [
+    {
+      "property_name": "2 BHK Apartment for Rent in Koramangala Bangalore",
+      "price": 40000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": 3,
+      "total_floors": 18,
+      "property_age": null,
+      "balcony_count": 2,
+      "built_up_area": "959 sqft",
+      "furnishing_status": "Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/mantri-classic-koramangala-bangalore-pdpid-4d4235303030363930",
+      "data_complete": false,
+      "filter_notes": [
+        "Floor 3 < 5 (excluded)",
+        "Price 40000 (OK)",
+        "Age: unknown (included with flag)",
+        "Balcony: 2 (OK)"
+      ],
+      "exclusion_reason": [
+        "Floor 3 < 5 (excluded)"
+      ]
+    },
+    {
+      "property_name": "2 BHK Apartment for Rent in Koramangala Bangalore",
+      "price": 35000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": 3,
+      "total_floors": 14,
+      "property_age": null,
+      "balcony_count": 2,
+      "built_up_area": "959 sqft",
+      "furnishing_status": "Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/prestige-pinewood-koramangala-bangalore-pdpid-4d4235303738373238",
+      "data_complete": false,
+      "filter_notes": [
+        "Floor 3 < 5 (excluded)",
+        "Price 35000 (OK)",
+        "Age: unknown (included with flag)",
+        "Balcony: 2 (OK)"
+      ],
+      "exclusion_reason": [
+        "Floor 3 < 5 (excluded)"
+      ]
+    },
+    {
+      "property_name": "2 BHK Apartment for Rent in Koramangala Bangalore",
+      "price": 30000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": 2,
+      "total_floors": 8,
+      "property_age": null,
+      "balcony_count": 2,
+      "built_up_area": "1500 sqft",
+      "furnishing_status": "Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/embassy-meadows-koramangala-bangalore-pdpid-4d4235303037373933",
+      "data_complete": false,
+      "filter_notes": [
+        "Floor 2 < 5 (excluded)",
+        "Price 30000 (OK)",
+        "Age: unknown (included with flag)",
+        "Balcony: 2 (OK)"
+      ],
+      "exclusion_reason": [
+        "Floor 2 < 5 (excluded)"
+      ]
+    },
+    {
+      "property_name": "2 BHK Apartment for Rent in Koramangala Bangalore",
+      "price": 36000,
+      "location": "Koramangala Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": 2,
+      "total_floors": 4,
+      "property_age": null,
+      "balcony_count": 3,
+      "built_up_area": "840 sqft",
+      "furnishing_status": "Semi-Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/bildens-swarganga-koramangala-bangalore-pdpid-4d4235303339373236",
+      "data_complete": false,
+      "filter_notes": [
+        "Floor 2 < 5 (excluded)",
+        "Price 36000 (OK)",
+        "Age: unknown (included with flag)",
+        "Balcony: 3 (OK)"
+      ],
+      "exclusion_reason": [
+        "Floor 2 < 5 (excluded)"
+      ]
+    },
+    {
+      "property_name": "Mig KHB Colony Koramangala, Bangalore",
+      "price": 22100000,
+      "location": "Devanahalli, Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": null,
+      "total_floors": null,
+      "property_age": null,
+      "balcony_count": null,
+      "built_up_area": "1100 sqft",
+      "furnishing_status": "Semi-Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/mig-khb-colony-koramangala-block-5-bangalore-pdpid-4d4235303038353637",
+      "data_complete": false,
+      "filter_notes": [
+        "Floor: unknown (included with flag)",
+        "Price 22100000 out of range (excluded)",
+        "Age: unknown (included with flag)",
+        "Balcony: unknown (included with flag)"
+      ],
+      "exclusion_reason": [
+        "Price 22100000 out of range (excluded)"
+      ]
+    },
+    {
+      "property_name": "Mig KHB Colony Koramangala, Bangalore",
+      "price": 22100000,
+      "location": "Devanahalli, Bangalore",
+      "bhk_config": "2 BHK",
+      "floor_number": null,
+      "total_floors": null,
+      "property_age": null,
+      "balcony_count": 1,
+      "built_up_area": "1000 sqft",
+      "furnishing_status": "Semi-Furnished",
+      "amenities": [],
+      "deposit_amount": null,
+      "builder_society": null,
+      "listing_url": "https://www.magicbricks.com/mig-khb-colony-koramangala-bangalore-pdpid-4d4235303038353637",
+      "data_complete": false,
+      "filter_notes": [
+        "Floor: unknown (included with flag)",
+        "Price 22100000 out of range (excluded)",
+        "Age: unknown (included with flag)",
+        "Balcony: 1 (OK)"
+      ],
+      "exclusion_reason": [
+        "Price 22100000 out of range (excluded)"
+      ]
+    }
+  ]
+}
