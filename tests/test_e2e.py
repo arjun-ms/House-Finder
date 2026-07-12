@@ -19,7 +19,7 @@ import asyncio
 from playwright.async_api import async_playwright
 
 import config
-from browser_agent import (
+from agents.browser_agent import (
     navigate_to_magicbricks,
     select_rent_tab,
     fill_location,
@@ -28,7 +28,7 @@ from browser_agent import (
     apply_more_filters,
     click_search,
 )
-from data_filter import (
+from pipeline.data_filter import (
     filter_properties,
     parse_floor_number,
     parse_property_age,

@@ -1,0 +1,33 @@
+graph TD
+    User([User]) --> Main[main.py<br>Orchestrator]
+    Main --> Config[config.py<br>Settings & Thresholds]
+    
+    subgraph Phase 1: Data Collection
+        Main --> BrowserAgent[browser_agent.py<br>Deterministic Scraper]
+        BrowserAgent -- Scrapes MagicBricks --> RawData[(Raw Property Data)]
+        
+        %% Self-Healing Architecture
+        BrowserAgent -.->|Timeout / UI Break| SelfHealing((self_healing_action<br>Decorator))
+        SelfHealing -.->|Wakes up AI| SmartAgent[smart_browser_agent.py<br>LLM Agent]
+        SmartAgent -.->|Fixes UI interaction| BrowserAgent
+    end
+    
+    subgraph Phase 2: Filtering
+        RawData --> DataFilter[data_filter.py<br>Deterministic Filters]
+        DataFilter -- "Enforces Rules<br>(e.g. Floor >= 5)" --> CleanData[(Filtered Properties)]
+    end
+    
+    subgraph Phase 3: Cognitive Analysis
+        CleanData --> ReportGen[report_generator.py<br>Gemini LLM]
+        ReportGen -- "Ranks & Formats" --> Output[min_5_report.html / .md]
+    end
+    
+    Output --> User
+
+    classDef python fill:#f9f2f4,stroke:#333,stroke-width:2px;
+    classDef planned fill:#fff4e6,stroke:#ff9800,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef data fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+
+    class Main,Config,BrowserAgent,DataFilter,ReportGen,SmartAgent python;
+    class SelfHealing planned;
+    class RawData,CleanData,Output data;

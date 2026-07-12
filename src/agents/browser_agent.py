@@ -14,7 +14,7 @@ import re
 from playwright.async_api import async_playwright, Page, Browser, BrowserContext
 
 import config
-from agent_tools import AgentTools
+from agents.agent_tools import AgentTools
 
 
 async def random_delay():
@@ -242,9 +242,22 @@ async def fill_location(page: Page, target_location: str, tools: AgentTools = No
     await asyncio.sleep(0.5)
     
     print("[*] Clearing existing location pills...")
-    for _ in range(5):
-        await page.keyboard.press("Backspace")
-        await asyncio.sleep(0.2)
+    close_btns = page.locator(".mb-search__tag-close, .mb-search__tag .icon-close")
+    close_count = await close_btns.count()
+    
+    if close_count > 0:
+        print(f"[*] Found {close_count} close buttons. Clicking them...")
+        for i in range(close_count):
+            try:
+                await close_btns.first.evaluate("el => el.click()")
+                await asyncio.sleep(0.5)
+            except Exception:
+                pass
+    else:
+        # Fallback to backspace if the close button isn't found
+        for _ in range(5):
+            await page.keyboard.press("Backspace")
+            await asyncio.sleep(0.2)
         
     await input_element.fill("")
     await asyncio.sleep(0.3)
@@ -285,8 +298,8 @@ async def fill_location(page: Page, target_location: str, tools: AgentTools = No
 
 
 async def apply_bhk_filter(page: Page, tools: AgentTools = None):
-    """Select 2 BHK exclusively from the BHK filter options."""
-    print("[*] Applying BHK filter (2 BHK only)...")
+    """Select 'Flat' as property type and 2 BHK exclusively."""
+    print("[*] Applying Property Type (Flat) and BHK filter (2 BHK only)...")
     
     # Click the property type dropdown to open it first
     try:
@@ -298,7 +311,23 @@ async def apply_bhk_filter(page: Page, tools: AgentTools = None):
         pass
 
     try:
-        # MagicBricks checks 2 and 3 BHK by default. We need to uncheck the wrong ones.
+        # 1. Set Property Type: ensure 'Flat' is checked, 'House/Villa' is unchecked
+        # residential_0 is Flat, residential_1 is House/Villa
+        for i in range(2):
+            checkbox = page.locator(f"input#residential_{i}")
+            label = page.locator(f"label[for='residential_{i}']")
+            if await checkbox.count() > 0 and await label.is_visible(timeout=500):
+                is_checked = await checkbox.is_checked()
+                if i == 0:  # Flat
+                    if not is_checked:
+                        await label.evaluate('el => el.click()')
+                        await asyncio.sleep(0.2)
+                else:       # House/Villa
+                    if is_checked:
+                        await label.evaluate('el => el.click()')
+                        await asyncio.sleep(0.2)
+
+        # 2. Set BHK: ensure ONLY 2 BHK is checked
         # Loop through indices 0 to 5 (1 BHK to 5+ BHK)
         for i in range(6):
             checkbox = page.locator(f"input#bhkFlatHouse_{i}")
@@ -315,12 +344,12 @@ async def apply_bhk_filter(page: Page, tools: AgentTools = None):
                         await label.evaluate('el => el.click()')
                         await asyncio.sleep(0.2)
         
-        print("[*] 2 BHK filter applied exclusively.")
+        print("[*] Property Type (Flat) and 2 BHK filter applied exclusively.")
         if tools:
             await tools.inspect_step("bhk_filter", ".mb-search__property")
         return
     except Exception as e:
-        print(f"[!] Could not apply BHK filter, proceeding without it. Error: {e}")
+        print(f"[!] Could not apply Property Type/BHK filter, proceeding without it. Error: {e}")
 
 
 async def apply_budget_filter(page: Page, tools: AgentTools = None):
@@ -804,6 +833,8 @@ async def scrape_property_detail(context, prop: dict) -> dict | None:
         # --- Extract from detail/info table rows ---
         # MagicBricks often shows details in key-value pairs
         detail_selectors = [
+            "[class*='dtls__body__list--item']",
+            ".mb-ldp__dtls__body__list--item",
             ".mb-srp__card:nth-child(1) .mb-srp__card__summary__list--item",
             ".mb-srp__card__summary__list--item",
             ".mb-ldp__dtls li",
@@ -831,7 +862,10 @@ async def scrape_property_detail(context, prop: dict) -> dict | None:
             except Exception:
                 continue
 
-        print(f"DETAIL TEXTS FOUND: {detail_texts}")
+        try:
+            print(f"DETAIL TEXTS FOUND: {detail_texts}")
+        except UnicodeEncodeError:
+            print(f"DETAIL TEXTS FOUND: [Contains Unicode]")
 
         # Parse detail texts for specific fields
         for text in detail_texts:
@@ -923,11 +957,14 @@ async def scrape_property_detail(context, prop: dict) -> dict | None:
             except Exception:
                 continue
 
-        print(f"[{index}/{total}] Scraped: {property_data.get('property_name') or 'Unknown'}... OK")
+        try:
+            print(f"Scraped: {property_data.get('property_name') or 'Unknown'}... OK")
+        except UnicodeEncodeError:
+            print(f"Scraped: [Property Name Contains Unicode]... OK")
         return property_data
 
     except Exception as e:
-        print(f"[{index}/{total}] FAILED ({type(e).__name__}: {str(e)[:100]}), skipping")
+        print(f"FAILED ({type(e).__name__}: {str(e)[:100]}), skipping")
         return None
     finally:
         try:
@@ -935,6 +972,11 @@ async def scrape_property_detail(context, prop: dict) -> dict | None:
             asyncio.create_task(page.close())
         except Exception:
             pass
+
+async def extract_individual_urls_from_project_page(context, url: str) -> list[str]:
+    """Given a project pdpid URL, extract links to the individual rental properties inside it."""
+    # TODO: Implement this to pass the test
+    return []
 
 
 
@@ -1067,156 +1109,6 @@ async def run_browser_agent() -> list[dict]:
         return properties
 
 
-async def scrape_property_detail(context, prop: dict) -> dict | None:
-    """Scrape detailed information from a property's dedicated page, merging with existing data."""
-    import re
-    url = prop.get("listing_url")
-    if not url: return prop
-    
-    property_data = prop.copy()
-    page = await context.new_page()
-    import asyncio
-    page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
-    try:
-        import config
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=config.DETAIL_PAGE_TIMEOUT)
-        except Exception as load_e:
-            print(f"[!] Goto timeout or error ({load_e}), continuing to scrape whatever loaded...")
-        
-        await asyncio.sleep(3)
-        await dismiss_popups(page)
-
-        # --- Property Name ---
-        if property_data.get("property_name") is None:
-            name_selectors = [
-                "h1",
-                ".mb-ldp__title",
-                ".property-name",
-                ".prop-name",
-                "[class*='title'] h1",
-                "[class*='Title'] h1",
-            ]
-            for sel in name_selectors:
-                try:
-                    el = page.locator(sel).first
-                    if await el.is_visible(timeout=1000):
-                        val = (await el.text_content()).strip()
-                        if val: property_data["property_name"] = val
-                        break
-                except Exception:
-                    continue
-
-        # --- Price ---
-        if property_data.get("price") is None:
-            price_selectors = [
-                "[class*='price']",
-                "[class*='Price']",
-                ".mb-ldp__price",
-                ".propPrice",
-                "#price",
-            ]
-            
-            for sel in price_selectors:
-                try:
-                    el = page.locator(sel).first
-                    if await el.is_visible(timeout=1000):
-                        price_text = (await el.text_content()).strip()
-                        parsed = parse_price(price_text)
-                        if parsed:
-                            property_data["price"] = parsed
-                        elif price_text:
-                            property_data["price"] = price_text[:20]
-                        break
-                except Exception:
-                    continue
-
-        # --- Location ---
-        location_selectors = [
-            "[class*='locality']",
-            "[class*='Locality']",
-            "[class*='address']",
-            "[class*='Address']",
-            ".mb-ldp__locality",
-            ".prop-location",
-        ]
-        for sel in location_selectors:
-            try:
-                el = page.locator(sel).first
-                if await el.is_visible(timeout=1000):
-                    val = (await el.text_content()).strip()
-                    if val: property_data["location"] = val
-                    break
-            except Exception:
-                continue
-
-        # --- Extract from detail/info table rows ---
-        detail_selectors = [
-            ".mb-srp__card:nth-child(1) .mb-srp__card__summary__list--item",
-            ".mb-srp__card__summary__list--item",
-            ".mb-ldp__dtls li",
-            ".mb-ldp__more--dtl li",
-            ".propInfoList li",
-            ".detail-list li",
-            ".prop-dtl li",
-            "table.propInfo tr",
-            "[class*='detail'] li",
-            "[class*='Detail'] li",
-            "[class*='info'] li",
-        ]
-
-        detail_texts = []
-        for sel in detail_selectors:
-            try:
-                items = page.locator(sel)
-                count = await items.count()
-                if count > 0:
-                    for i in range(count):
-                        text = await items.nth(i).text_content()
-                        if text:
-                            detail_texts.append(text.strip())
-                    break
-            except Exception:
-                continue
-
-        print(f"DETAIL TEXTS FOUND: {detail_texts}")
-
-        # Parse detail texts for specific fields
-        for text in detail_texts:
-            text_lower = text.lower()
-
-            # Floor
-            if "floor" in text_lower and not property_data.get("floor_number"):
-                floor_match = re.search(r"(\d+)\s*(?:out of|/|of)\s*(\d+)", text)
-                if floor_match:
-                    property_data["floor_number"] = int(floor_match.group(1))
-                    property_data["total_floors"] = int(floor_match.group(2))
-                else:
-                    num = parse_number(text)
-                    if num:
-                        property_data["floor_number"] = int(num)
-
-            # Property Age
-            elif any(kw in text_lower for kw in ["age", "year", "old", "possession"]):
-                if not property_data.get("property_age"):
-                    num = parse_number(text)
-                    if num is not None:
-                        property_data["property_age"] = 2026 - num if num > 1900 else num
-
-            # Balcony
-            elif "balcon" in text_lower:
-                if not property_data.get("balcony_count"):
-                    num = parse_number(text)
-                    if num is not None:
-                        property_data["balcony_count"] = num
-
-        return property_data
-
-    except Exception as e:
-        print(f"[!] Error scraping detail page {url}: {e}")
-        return prop
-    finally:
-        await page.close()
 
 
 async def scrape_details_for_urls(props: list[dict]) -> list[dict]:

@@ -4,30 +4,26 @@ LLM Recommender - Gemini 2.0 Flash integration for property ranking.
 Takes shortlisted properties as structured JSON, scores them on weighted
 criteria, and returns a ranked list with top 3 and best pick.
 """
-
 import json
 import os
 
-from dotenv import load_dotenv
-from google.genai import types
 from google import genai
+from google.genai import types
+from dotenv import load_dotenv
 
 import config
 
-# Load API key from .env
 load_dotenv()
 
-
-def get_gemini_client():
+def get_llm_client():
     """Initialize and return the Gemini client."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError(
             "GEMINI_API_KEY not found. "
             "Create a .env file with GEMINI_API_KEY=your_key_here "
-            "(see .env.example)"
         )
-    client = genai.Client(api_key=api_key, http_options={'timeout': 30000})
+    client = genai.Client(api_key=api_key)
     return client
 
 
@@ -85,6 +81,9 @@ IMPORTANT: Respond with ONLY valid JSON in the exact format below. No markdown, 
       "location": "location from data",
       "floor_number": "floor from data or unknown",
       "property_age": "age from data or unknown",
+      "bhk_config": "bhk from data or unknown",
+      "built_up_area": "area from data or unknown",
+      "furnishing_status": "furnishing from data or unknown",
       "strengths": ["strength 1", "strength 2"],
       "weaknesses": ["weakness 1"]
     }}
@@ -118,7 +117,7 @@ def rank_properties(properties: list[dict]) -> dict:
     """
     print(f"\n[*] Sending {len(properties)} properties to Gemini for ranking...")
 
-    client = get_gemini_client()
+    client = get_llm_client()
     prompt = build_prompt(properties)
 
     # Call Gemini with structured JSON output
@@ -126,12 +125,12 @@ def rank_properties(properties: list[dict]) -> dict:
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
-                model=config.GEMINI_MODEL,
+                model=config.LLM_MODEL,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    temperature=0.3,  # Low temp for consistent ranking
-                ),
+                    temperature=0.3,
+                )
             )
 
             # Parse the response

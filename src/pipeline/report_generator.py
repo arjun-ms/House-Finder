@@ -140,13 +140,13 @@ def generate_markdown_report(
         lines.append("")
 
     # Full Shortlist Table
-    shortlisted = llm_result.get("shortlisted_10", [])
-    if shortlisted:
+    all_properties = llm_result.get("shortlisted_10", [])
+    if all_properties:
         lines.append("## All Shortlisted Properties")
         lines.append("")
-        lines.append("| Rank | Property | Score | Price | Config | Area | Furnished | Location | Floor | Age |")
-        lines.append("|------|----------|-------|-------|--------|------|-----------|----------|-------|-----|")
-        for prop in shortlisted:
+        lines.append("| Rank | Property | Score | Price | BHK | Area | Furnished | Location | Floor | Age | Link |")
+        lines.append("|------|----------|-------|-------|-----|------|-----------|----------|-------|-----|------|")
+        for prop in all_properties[:15]:
             rank = prop.get("rank", "?")
             name = prop.get("property_name", "Unknown")
             score = prop.get("score", "N/A")
@@ -184,8 +184,10 @@ def generate_markdown_report(
             location = str(location)[:20] if len(str(location)) > 20 else location
             bhk = str(bhk).replace("BHK", "").strip() if bhk != "N/A" else bhk
             area = str(area).replace("sqft", "").strip() if area != "N/A" else area
+            url = prop.get("listing_url", "")
+            link = f"[View]({url})" if url else "N/A"
             
-            lines.append(f"| {rank} | {name} | {score} | {price} | {bhk} | {area} | {furnishing} | {location} | {floor} | {age} |")
+            lines.append(f"| {rank} | {name} | {score} | {price} | {bhk} | {area} | {furnishing} | {location} | {floor} | {age} | {link} |")
         lines.append("")
         lines.append("---")
         lines.append("")

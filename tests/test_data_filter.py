@@ -1,6 +1,6 @@
 import pytest
 import config
-from data_filter import filter_properties
+from pipeline.data_filter import filter_properties
 
 # Ensure config matches our strict requirements for the test
 config.MIN_FLOOR = 12

@@ -5,7 +5,7 @@ sys.path.insert(0, ".")
 
 def test_deduplicate_by_url_removes_exact_duplicates():
     """When the same listing_url appears from two location searches, keep only the first."""
-    from browser_agent import deduplicate_properties
+    from agents.browser_agent import deduplicate_properties
 
     props = [
         {"property_name": "Desai Radiant", "listing_url": "https://magicbricks.com/desai-radiant-pdpid-123", "price": 10800000},
@@ -25,7 +25,7 @@ def test_deduplicate_by_url_removes_exact_duplicates():
 
 def test_deduplicate_preserves_order():
     """Deduplication preserves insertion order (first occurrence wins)."""
-    from browser_agent import deduplicate_properties
+    from agents.browser_agent import deduplicate_properties
 
     props = [
         {"property_name": "B", "listing_url": "url-b"},
@@ -42,7 +42,7 @@ def test_deduplicate_preserves_order():
 
 def test_deduplicate_empty_list():
     """Deduplication of an empty list returns empty list."""
-    from browser_agent import deduplicate_properties
+    from agents.browser_agent import deduplicate_properties
     assert deduplicate_properties([]) == []
 
 

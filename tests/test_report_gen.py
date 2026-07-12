@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.insert(0, ".")
 
-import report_generator
+from pipeline import report_generator
 import config
 
 def test_report_generation():

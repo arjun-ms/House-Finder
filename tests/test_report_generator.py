@@ -1,7 +1,7 @@
 import pytest
 import os
 import json
-from report_generator import generate_json_report, generate_markdown_report, generate_html_report, generate_all_reports
+from pipeline.report_generator import generate_json_report, generate_markdown_report, generate_html_report, generate_all_reports
 import config
 
 @pytest.fixture

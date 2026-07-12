@@ -3,7 +3,7 @@ import sys
 from playwright.async_api import async_playwright
 
 import pytest
-from browser_agent import navigate_to_magicbricks, select_rent_tab, fill_location, click_search
+from agents.browser_agent import navigate_to_magicbricks, select_rent_tab, fill_location, click_search
 
 @pytest.mark.asyncio
 async def test_search_form():

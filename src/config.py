@@ -41,7 +41,7 @@ MAX_DELAY = 5                       # Maximum seconds between page navigations
 VIEWPORT_WIDTH = 1366
 VIEWPORT_HEIGHT = 768
 HEADED = True                        # Run browser in headless mode
-RECORD_VIDEO = True                 # Record browser session
+RECORD_VIDEO = False     # If True, records the browser session to mp4
 VIDEO_DIR = "output"
 
 # =============================================================================
@@ -67,7 +67,7 @@ MAGICBRICKS_URL = "https://www.magicbricks.com"
 # LLM SETTINGS
 # =============================================================================
 
-GEMINI_MODEL = "gemini-2.0-flash"   # Used for ranking and recommendations for LLM ranking (must sum to 1.0)
+LLM_MODEL = "gemini-3.1-flash-lite"   # Used for ranking and recommendations
 
 # Scoring weights for LLM ranking (must sum to 1.0)
 SCORING_WEIGHTS = {

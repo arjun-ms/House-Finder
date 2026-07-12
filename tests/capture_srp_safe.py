@@ -1,6 +1,6 @@
 import asyncio
 from playwright.async_api import async_playwright
-import browser_agent
+from agents import browser_agent
 
 async def test_srp_extraction():
     async with async_playwright() as p:

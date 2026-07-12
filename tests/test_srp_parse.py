@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, ".")
 
 def test_parse_srp_card():
-    from browser_agent import parse_srp_card_html
+    from agents.browser_agent import parse_srp_card_html
     
     # Mock HTML of an SRP card
     card_html = """

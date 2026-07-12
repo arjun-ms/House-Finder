@@ -1,7 +1,7 @@
 import pytest
 import json
 from unittest.mock import patch, MagicMock
-from llm_recommender import build_prompt, rank_properties
+from pipeline.llm_recommender import build_prompt, rank_properties
 
 def test_build_prompt_contains_properties_json():
     properties = [{"property_name": "Test Prop", "rent": 50000}]

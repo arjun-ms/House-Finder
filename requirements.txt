@@ -1,4 +1,6 @@
 playwright
 google-genai
 python-dotenv
-markdownplaywright
+markdown
+playwright
+browser-use

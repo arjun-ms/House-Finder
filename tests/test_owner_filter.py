@@ -18,7 +18,7 @@ async def test_owner_filter():
             
             print("[*] Attempting to click 'Owners' filter...")
             
-            # Replicating the logic from browser_agent.py
+            # Replicating the logic from agents.browser_agent.py
             posted_by = page.locator("xpath=/html/body/div/div/div/div[2]/div[1]/div/div[2]/div[5]/div")
             if await posted_by.count() > 0:
                 await posted_by.first.click()

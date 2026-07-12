@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from playwright.async_api import async_playwright
 import config
-from browser_agent import (
+from agents.browser_agent import (
     navigate_to_magicbricks,
     select_rent_tab,
     fill_location,
