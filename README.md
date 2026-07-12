@@ -4,7 +4,7 @@ A highly robust, 3-phase AI automation pipeline that searches MagicBricks for 2B
 
 ## View the demo video below
 
-
+[![Watch the demo video](https://img.youtube.com/vi/pP5CBB1kumg/maxresdefault.jpg)](https://youtu.be/pP5CBB1kumg)
 
 ## What It Does (The 3-Phase Pipeline)
 
